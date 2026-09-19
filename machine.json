@@ -1,0 +1,1 @@
+{"schema":"axm.morphtile.machine-manifest/v0.1","id":"axm.morphtile.machine.verification","version":"0.1.0","envelope":"0.1","accepts":["axm.morphtile.verification-request/v0.1"],"produces":["axm.morphtile.verification-result/v0.1"],"tested_against":{"repository":"mike-axiom-mir/axm-morphtile","commit":"13d83a2b2c0d12644442d3d9e45bcbe0af19876a","format":"v0.4"}}

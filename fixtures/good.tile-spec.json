@@ -1,0 +1,1 @@
+{"schema":"morphtile.tile-spec/v0.4","name":"Verified fixture","form_hints":["game_asset"],"facets":{"mesh":{"type":"primitive","source":null,"data":{"shape":"box","size":[1,1,1]}}}}
