@@ -27,4 +27,3 @@ Node 18 or later; zero runtime dependencies; no secrets or network required.
 - HELD: Current PASS is structural only; no runtime, portability, performance, or visual claim.
 
 This is a foundation, not evidence that MorphTile can autonomously manufacture MorphTile.
-

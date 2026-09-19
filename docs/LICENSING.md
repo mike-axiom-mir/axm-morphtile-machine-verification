@@ -15,4 +15,3 @@ This creation machine separates its software from what people build with it.
 This boundary does not erase third-party rights. The legally operative files are `LICENSE` and `CREATOR_OUTPUT_PERMISSION.md`.
 
 > Earning with the machine is permitted. Earning from the machine requires a grounded case and separate written permission.
-

@@ -16,4 +16,3 @@ Known-good, intentionally broken, and missing-candidate fixtures.
 Current PASS is structural only; no runtime, portability, performance, or visual claim.
 
 No claim of autonomous creation, production readiness, canon, or visual quality is made.
-

@@ -46,4 +46,3 @@ the PolyForm Noncommercial License 1.0.0.
 
 > Earning with the machine is permitted. Earning from the machine requires a
 > grounded case and separate written permission.
-

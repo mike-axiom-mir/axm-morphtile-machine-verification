@@ -11,4 +11,3 @@ Tested contract target:
 The adapter emits candidate data only. The receiving caller must validate it against the pinned MorphTile runtime, propose it through clone/plan, inspect conflicts and HOLDs, commit only with the applicable authority, preserve the receipt, and retain rollback.
 
 No compatibility is claimed with newer or older MorphTile commits until their conformance tests are run.
-

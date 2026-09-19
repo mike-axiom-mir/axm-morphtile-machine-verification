@@ -6,4 +6,3 @@
 4. Re-test before widening the declared MorphTile compatibility range.
 
 Do not add speculative breadth merely to make the repository look complete.
-
