@@ -68,6 +68,38 @@ jobs:
           path: .runtime/morphtile-current
           sparse-checkout: |
             core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
+          path: .runtime/assembly-retention
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ec3072738d9b5ab371a62852132dd6c14af09d5a
+          path: .runtime/form-retention
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: b5277b5819974829218c1f1fa694ba73dac46d6e
+          path: .runtime/surface-retention
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: 49c657f57a41898c74978b20cafac32e3a33faed
+          path: .runtime/capability-retention
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-retention
+          sparse-checkout: |
+            core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ada4b228f52ccc22ae005b77d83d03e5370992ba
+          path: .runtime/interface-compat
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -83,6 +115,26 @@ jobs:
           CAPABILITY_WAKE_COMMIT: 795ac57694d69128d4a077de4ee1750f98ea277b
           MORPHTILE_CURRENT_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-current/core/morphtile.js
           MORPHTILE_CURRENT_COMMIT: b6b086edb70fd4657495fcf01cb9fcdedceafdaf
+      - name: Target current Assembly semantic retention
+        run: node --test test/assembly-current-retention-conformance.test.js
+        env:
+          ASSEMBLY_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-retention
+          ASSEMBLY_RETENTION_COMMIT: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
+          FORM_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/form-retention
+          FORM_RETENTION_COMMIT: ec3072738d9b5ab371a62852132dd6c14af09d5a
+          SURFACE_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/surface-retention
+          SURFACE_RETENTION_COMMIT: b5277b5819974829218c1f1fa694ba73dac46d6e
+          CAPABILITY_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/capability-retention
+          CAPABILITY_RETENTION_COMMIT: 49c657f57a41898c74978b20cafac32e3a33faed
+          MORPHTILE_RETENTION_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-retention/core/morphtile.js
+          MORPHTILE_RETENTION_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+      - name: Target current Interface to Assembly compatibility
+        run: node --test test/interface-assembly-conformance.test.js
+        env:
+          INTERFACE_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/interface-compat
+          INTERFACE_COMPAT_COMMIT: ada4b228f52ccc22ae005b77d83d03e5370992ba
+          ASSEMBLY_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-retention
+          ASSEMBLY_COMPAT_COMMIT: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
       - name: Full Verification suite
         run: npm test
         env:
@@ -106,3 +158,17 @@ jobs:
           CAPABILITY_WAKE_COMMIT: 795ac57694d69128d4a077de4ee1750f98ea277b
           MORPHTILE_CURRENT_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-current/core/morphtile.js
           MORPHTILE_CURRENT_COMMIT: b6b086edb70fd4657495fcf01cb9fcdedceafdaf
+          ASSEMBLY_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-retention
+          ASSEMBLY_RETENTION_COMMIT: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
+          FORM_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/form-retention
+          FORM_RETENTION_COMMIT: ec3072738d9b5ab371a62852132dd6c14af09d5a
+          SURFACE_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/surface-retention
+          SURFACE_RETENTION_COMMIT: b5277b5819974829218c1f1fa694ba73dac46d6e
+          CAPABILITY_RETENTION_REPO_PATH: ${{ github.workspace }}/.runtime/capability-retention
+          CAPABILITY_RETENTION_COMMIT: 49c657f57a41898c74978b20cafac32e3a33faed
+          MORPHTILE_RETENTION_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-retention/core/morphtile.js
+          MORPHTILE_RETENTION_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          INTERFACE_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/interface-compat
+          INTERFACE_COMPAT_COMMIT: ada4b228f52ccc22ae005b77d83d03e5370992ba
+          ASSEMBLY_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-retention
+          ASSEMBLY_COMPAT_COMMIT: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
