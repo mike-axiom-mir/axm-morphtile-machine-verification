@@ -1,0 +1,48 @@
+name: Nested Interface Assembly conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - verification/render-provenance-finite-progression
+
+permissions:
+  contents: read
+
+jobs:
+  nested-interface-assembly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 92cee3a9cbe823bcd2ca6a587f8b116c13e0ba99
+          path: .runtime/interface
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 680b52dd14bc2d6f250fc5330449c8fbfd93ad16
+          path: .runtime/assembly
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify exact nested Interface to Assembly transport
+        run: node --test test/nested-interface-assembly-conformance.test.js
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          INTERFACE_NESTED_MACHINE_PATH: ${{ github.workspace }}/.runtime/interface
+          INTERFACE_NESTED_COMMIT: 92cee3a9cbe823bcd2ca6a587f8b116c13e0ba99
+          ASSEMBLY_REPO_PATH: ${{ github.workspace }}/.runtime/assembly
+          ASSEMBLY_COMMIT: 680b52dd14bc2d6f250fc5330449c8fbfd93ad16
