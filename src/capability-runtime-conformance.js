@@ -1,11 +1,9 @@
 "use strict";
 
+const { failure } = require("./verdict");
+
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
-}
-
-function failure(code, detail, extra = {}) {
-  return { code, detail, ...extra };
 }
 
 function hasOwn(obj, key) {
@@ -149,7 +147,10 @@ function verifySleepingCounterLifecycle(machine, runtime, options = {}) {
   const invalid = machine.run({ ...clone(request), request_id: "verification-capability-invalid-initial", intent: { kind: "sleeping-counter", wake: { on: "manual" }, initial: 1.5 } });
   const invalidCode = invalid && Array.isArray(invalid.holds) && invalid.holds[0] && invalid.holds[0].code;
   if (!invalid || invalid.status !== "HOLD" || invalidCode !== "HOLD_COUNTER_INITIAL_INVALID") {
-    errors.push(failure("INVALID_INITIAL_NOT_HELD", "Non-safe-integer initial state must HOLD without coercion.", { status: invalid && invalid.status || null, code: invalidCode || null }));
+    errors.push(failure("INVALID_INITIAL_NOT_HELD", "Non-safe-integer initial state must HOLD without coercion.", {
+      observed_status: invalid && invalid.status || null,
+      observed_code: invalidCode || null
+    }));
   }
   checked.push("invalid-initial-fail-closed");
 
