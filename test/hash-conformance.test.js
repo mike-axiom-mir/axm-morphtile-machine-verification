@@ -25,6 +25,7 @@ test("canonical profile preserves MorphTile undefined handling", () => {
 
 const corePath = process.env.MORPHTILE_CORE_PATH;
 test("pinned MorphTile core and Verification Machine agree on canonical hash vectors", { skip: !corePath }, () => {
+  assert.equal(process.env.MORPHTILE_COMMIT, vectors.reference.commit, "CI MorphTile checkout must match the vector pin");
   const core = require(path.resolve(corePath));
   assert.equal(core.VERSION, "0.4");
   const report = verifyHashVectors(vectors, { canonicalize: core.canonical, digest: core.hashOf });
