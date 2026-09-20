@@ -100,6 +100,16 @@ jobs:
           repository: mike-axiom-mir/axm-morphtile-machine-interface
           ref: ada4b228f52ccc22ae005b77d83d03e5370992ba
           path: .runtime/interface-compat
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 5dd11a33ed15a86f995fc47333c3822d94f5ec68
+          path: .runtime/interface-compat-repaired
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 8fac6be82273ec698f8db725fa9011bc1c1f4d9d
+          path: .runtime/assembly-compat-repaired
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -128,13 +138,17 @@ jobs:
           CAPABILITY_RETENTION_COMMIT: 49c657f57a41898c74978b20cafac32e3a33faed
           MORPHTILE_RETENTION_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-retention/core/morphtile.js
           MORPHTILE_RETENTION_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
-      - name: Target current Interface to Assembly compatibility
+      - name: Target Interface to Assembly compatibility before and after repair
         run: node --test test/interface-assembly-conformance.test.js
         env:
           INTERFACE_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/interface-compat
           INTERFACE_COMPAT_COMMIT: ada4b228f52ccc22ae005b77d83d03e5370992ba
           ASSEMBLY_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-retention
           ASSEMBLY_COMPAT_COMMIT: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
+          INTERFACE_COMPAT_REPAIRED_REPO_PATH: ${{ github.workspace }}/.runtime/interface-compat-repaired
+          INTERFACE_COMPAT_REPAIRED_COMMIT: 5dd11a33ed15a86f995fc47333c3822d94f5ec68
+          ASSEMBLY_COMPAT_REPAIRED_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-compat-repaired
+          ASSEMBLY_COMPAT_REPAIRED_COMMIT: 8fac6be82273ec698f8db725fa9011bc1c1f4d9d
       - name: Full Verification suite
         run: npm test
         env:
@@ -172,3 +186,7 @@ jobs:
           INTERFACE_COMPAT_COMMIT: ada4b228f52ccc22ae005b77d83d03e5370992ba
           ASSEMBLY_COMPAT_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-retention
           ASSEMBLY_COMPAT_COMMIT: eb62dd039aadf4fd1c1f67468e0afd4344ab8b81
+          INTERFACE_COMPAT_REPAIRED_REPO_PATH: ${{ github.workspace }}/.runtime/interface-compat-repaired
+          INTERFACE_COMPAT_REPAIRED_COMMIT: 5dd11a33ed15a86f995fc47333c3822d94f5ec68
+          ASSEMBLY_COMPAT_REPAIRED_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-compat-repaired
+          ASSEMBLY_COMPAT_REPAIRED_COMMIT: 8fac6be82273ec698f8db725fa9011bc1c1f4d9d
