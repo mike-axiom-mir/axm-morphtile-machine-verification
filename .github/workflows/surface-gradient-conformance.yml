@@ -1,0 +1,39 @@
+name: surface-gradient-conformance
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  surface-gradient-conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: f7824cf60d0036ca2a31a93866aceba57322aacd
+          path: .runtime/surface-gradient
+          sparse-checkout: |
+            src
+            machine.json
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-gradient
+          sparse-checkout: |
+            core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify merged Surface v0.5 mixed gradient and checker composition
+        run: node --test test/surface-gradient-conformance.test.js
+        env:
+          SURFACE_GRADIENT_REPO_PATH: ${{ github.workspace }}/.runtime/surface-gradient
+          SURFACE_GRADIENT_COMMIT: f7824cf60d0036ca2a31a93866aceba57322aacd
+          SURFACE_GRADIENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-gradient/core/morphtile.js
+          SURFACE_GRADIENT_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
