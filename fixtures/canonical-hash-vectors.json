@@ -1,6 +1,11 @@
 {
   "schema": "axm.morphtile.canonical-hash-vectors/v0.1",
   "profile": "canonical-json-sorted-keys/v1+sha256-utf8",
+  "reference": {
+    "repository": "mike-axiom-mir/axm-morphtile",
+    "commit": "4346df01ed18cd1336064f9323d7766ff4f6338a",
+    "core_path": "core/morphtile.js"
+  },
   "vectors": [
     {
       "id": "sorted-object",
