@@ -63,20 +63,27 @@ surfaceTest("Surface outer accessor repair passes, but Proxy interception remain
   assert.equal(result.receipt.visual_quality, "NOT_TESTED");
 });
 
-formTest("Form PR #17 rejects nested, root and revoked Proxy interception before reflection while preserving portable input", () => {
+formTest("Form PR #17 rejects live nested/root Proxy interception, but revoked root Proxy is independently detected as FAIL/HOLD", () => {
   assert.equal(formCommit, EXPECTED_FORM, "workflow must pin exact Form PR #17 head");
   const form = require(path.resolve(formRoot, "src"));
   const result = verifyFormProxyBoundary(form, { formCommit });
 
-  assert.equal(result.status, "PASS", JSON.stringify(result, null, 2));
-  assert.deepEqual(result.errors, []);
+  assert.equal(result.status, "FAIL", "revoked Proxy handling must remain a producer FAIL/HOLD until repaired on a new exact head");
+  assert.ok(
+    result.errors.some((entry) => entry.code === "FORM_REVOKED_ROOT_PROXY_NOT_FAIL_CLOSED"),
+    JSON.stringify(result, null, 2)
+  );
   assert.equal(result.receipt.form_commit, EXPECTED_FORM);
   assert.equal(result.receipt.nested_proxy.trap_calls, 0);
   assert.equal(result.receipt.nested_proxy.path, "request.intent.recipe[0]");
+  assert.equal(result.receipt.nested_proxy.pass, true);
   assert.equal(result.receipt.root_proxy.trap_calls, 0);
   assert.equal(result.receipt.root_proxy.path, "request");
-  assert.equal(result.receipt.revoked_root_proxy.threw, null);
-  assert.equal(result.receipt.revoked_root_proxy.pass, true);
+  assert.equal(result.receipt.root_proxy.pass, true);
+  assert.equal(result.receipt.revoked_root_proxy.status, null);
+  assert.equal(result.receipt.revoked_root_proxy.path, null);
+  assert.equal(result.receipt.revoked_root_proxy.threw, "Cannot perform 'IsArray' on a proxy that has been revoked");
+  assert.equal(result.receipt.revoked_root_proxy.pass, false);
   assert.equal(result.receipt.portable_control.status, "CANDIDATE");
   assert.equal(result.receipt.portable_control.preserved, true);
 });
