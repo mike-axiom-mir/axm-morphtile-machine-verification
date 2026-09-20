@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("node:path");
-const { verifyFormAssemblyClosure } = require("../src/form-assembly-closure-conformance");
+const { verifyFormV08AssemblyClosure } = require("../src/form-v08-assembly-closure-conformance");
 
 const env = {
   form: process.env.FORM_V08_REPO_PATH,
@@ -25,7 +25,7 @@ test("independently verifies Form v0.8 mixed pattern output through recursive As
   const { materializeKit } = require(path.join(path.resolve(env.assembly), "src", "kit"));
   const runtime = require(path.resolve(env.core));
 
-  const result = verifyFormAssemblyClosure({
+  const result = verifyFormV08AssemblyClosure({
     form,
     assembly,
     materializeKit,
@@ -42,6 +42,7 @@ test("independently verifies Form v0.8 mixed pattern output through recursive As
   assert.equal(result.receipt.revisions.form, env.formCommit);
   assert.equal(result.receipt.revisions.assembly, env.assemblyCommit);
   assert.equal(result.receipt.revisions.morphtile, env.coreCommit);
+  assert.deepEqual(result.receipt.nested_uses, ["frame", "panel"]);
   assert.equal(result.receipt.exact_64_status, "CANDIDATE");
   assert.equal(result.receipt.over_65_status, "HOLD");
   assert.equal(result.receipt.over_65_hold, "HOLD_FORM_COMPOSITION_INVALID");
