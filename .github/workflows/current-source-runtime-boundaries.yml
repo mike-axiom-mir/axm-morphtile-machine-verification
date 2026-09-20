@@ -1,0 +1,51 @@
+name: current source and runtime boundaries
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-source-runtime-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: d35b88288597de0010986856a268a661d929d83f
+          path: surface-pr15
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 5f71d1762a0c42ee3c4fa8d23580c5252ce7ffd2
+          path: form-pr15
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 552ff2b47906a9bd034fa40b263e9c068811a059
+          path: interface-pr10
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 429a344f7d9333bef01cf9de1c292c3af09abec2
+          path: core-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify source integrity and current runtime boundaries
+        working-directory: verification
+        run: node --test test/current-source-runtime-boundaries-conformance.test.js
+        env:
+          CURRENT_SOURCE_SURFACE_ROOT: ${{ github.workspace }}/surface-pr15
+          CURRENT_SOURCE_SURFACE_COMMIT: d35b88288597de0010986856a268a661d929d83f
+          CURRENT_SOURCE_FORM_ROOT: ${{ github.workspace }}/form-pr15
+          CURRENT_SOURCE_FORM_COMMIT: 5f71d1762a0c42ee3c4fa8d23580c5252ce7ffd2
+          CURRENT_SOURCE_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr10
+          CURRENT_SOURCE_INTERFACE_COMMIT: 552ff2b47906a9bd034fa40b263e9c068811a059
+          CURRENT_SOURCE_CORE_PATH: ${{ github.workspace }}/core-current/core/morphtile.js
+          CURRENT_SOURCE_CORE_COMMIT: 429a344f7d9333bef01cf9de1c292c3af09abec2
