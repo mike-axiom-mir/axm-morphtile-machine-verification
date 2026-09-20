@@ -1,0 +1,48 @@
+name: Current evidence boundary conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - verification/surface-observation-core-recipe-20260920
+
+permissions:
+  contents: read
+
+jobs:
+  current-evidence-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 3d74d5f1125aa9cd5810fc2331920db6b30024cc
+          path: .runtime/surface
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-surface
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 15098a9843415562f804b28ba8f347e0aa5ec4ee
+          path: .runtime/morphtile-core-pr13
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify Surface evidence split and current core non-finite recipe failure
+        run: node --test test/current-evidence-boundaries.test.js
+        env:
+          SURFACE_REPO_PATH: ${{ github.workspace }}/.runtime/surface
+          SURFACE_COMMIT: 3d74d5f1125aa9cd5810fc2331920db6b30024cc
+          SURFACE_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-surface/core/morphtile.js
+          SURFACE_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          CORE_CANDIDATE_PATH: ${{ github.workspace }}/.runtime/morphtile-core-pr13/core/morphtile.js
+          CORE_CANDIDATE_COMMIT: 15098a9843415562f804b28ba8f347e0aa5ec4ee
