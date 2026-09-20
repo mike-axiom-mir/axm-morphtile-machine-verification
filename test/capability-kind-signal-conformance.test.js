@@ -8,21 +8,21 @@ const CAPABILITY_CURRENT_COMMIT = process.env.CAPABILITY_CURRENT_COMMIT;
 const MORPHTILE_CURRENT_CORE_PATH = process.env.MORPHTILE_CURRENT_CORE_PATH;
 const MORPHTILE_CURRENT_COMMIT = process.env.MORPHTILE_CURRENT_COMMIT;
 
-const EXPECTED_CAPABILITY_COMMIT = "48915b6602142d263629ca5db87052f82fdf9a0c";
-const EXPECTED_MORPHTILE_COMMIT = "a579182ae585e5722ac87dd0cc8209963b18d000";
+const EXPECTED_CAPABILITY_COMMIT = "795ac57694d69128d4a077de4ee1750f98ea277b";
+const EXPECTED_MORPHTILE_COMMIT = "b6b086edb70fd4657495fcf01cb9fcdedceafdaf";
 
 function loadTargets() {
   assert.ok(CAPABILITY_CURRENT_REPO_PATH, "CAPABILITY_CURRENT_REPO_PATH is required");
   assert.ok(MORPHTILE_CURRENT_CORE_PATH, "MORPHTILE_CURRENT_CORE_PATH is required");
-  assert.equal(CAPABILITY_CURRENT_COMMIT, EXPECTED_CAPABILITY_COMMIT, "Capability checkout must match exact integrated main head");
-  assert.equal(MORPHTILE_CURRENT_COMMIT, EXPECTED_MORPHTILE_COMMIT, "MorphTile checkout must match exact current substrate pin");
+  assert.equal(CAPABILITY_CURRENT_COMMIT, EXPECTED_CAPABILITY_COMMIT, "Capability checkout must match exact candidate head");
+  assert.equal(MORPHTILE_CURRENT_COMMIT, EXPECTED_MORPHTILE_COMMIT, "MorphTile checkout must match exact converged substrate pin");
   return {
     machine: require(path.join(CAPABILITY_CURRENT_REPO_PATH, "src")),
     runtime: require(path.resolve(MORPHTILE_CURRENT_CORE_PATH))
   };
 }
 
-test("integrated Capability strict kind and named signal wake semantics pass independent conformance", () => {
+test("current Capability strict kind and named signal wake semantics pass independent conformance", () => {
   const { machine, runtime } = loadTargets();
   const result = verifyCapabilityKindAndSignal(machine, runtime, { expectedMachineVersion: "0.1.0" });
 
