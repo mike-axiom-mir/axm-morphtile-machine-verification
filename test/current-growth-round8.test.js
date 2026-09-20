@@ -310,8 +310,7 @@ test("Assembly PR #22: transitive special-name closure survives fresh import and
   const rejectedReceiver = MT.createWorld("Round 8 rejected receiver");
   const beforeReject = MT.structHash(rejectedReceiver);
   const rejected = MT.importKit(rejectedReceiver, tampered);
-  assert.equal(rejected.status, "HOLD", JSON.stringify(rejected));
-  assert.equal(firstHoldCode(rejected), "HOLD_HASH_MISMATCH");
+  assert.equal(rejected.status, "HOLD_HASH_MISMATCH", JSON.stringify(rejected));
   assert.equal(MT.structHash(rejectedReceiver), beforeReject, "hash rejection must not mutate the receiving world");
 
   console.log(JSON.stringify({
