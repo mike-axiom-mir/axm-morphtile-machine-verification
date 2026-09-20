@@ -1,0 +1,35 @@
+{
+  "schema": "axm.morphtile.canonical-hash-vectors/v0.1",
+  "profile": "canonical-json-sorted-keys/v1+sha256-utf8",
+  "reference": {
+    "repository": "mike-axiom-mir/axm-morphtile",
+    "commit": "4346df01ed18cd1336064f9323d7766ff4f6338a",
+    "core_path": "core/morphtile.js"
+  },
+  "vectors": [
+    {
+      "id": "sorted-object",
+      "value": {"z": 1, "a": 2},
+      "canonical_utf8": "{\"a\":2,\"z\":1}",
+      "sha256": "c2985c5ba6f7d2a55e768f92490ca09388e95bc4cccb9fdf11b15f4d42f93e73"
+    },
+    {
+      "id": "nested-array-object",
+      "value": {"outer": {"b": true, "a": null}, "items": [3, 2, 1]},
+      "canonical_utf8": "{\"items\":[3,2,1],\"outer\":{\"a\":null,\"b\":true}}",
+      "sha256": "db4b7158828fcc79e243f069f8ab8506487abb620e8a140981b88d0085935145"
+    },
+    {
+      "id": "unicode-and-escape",
+      "value": {"name": "MorphTile Ω", "line": "a\nb"},
+      "canonical_utf8": "{\"line\":\"a\\nb\",\"name\":\"MorphTile Ω\"}",
+      "sha256": "033d475315b4d5666e4c42b7e28f938ec1be4beda81870f6325e77d2b49dff28"
+    },
+    {
+      "id": "numbers-and-bools",
+      "value": {"n": 1.5, "i": -7, "ok": false},
+      "canonical_utf8": "{\"i\":-7,\"n\":1.5,\"ok\":false}",
+      "sha256": "0583eac9bb755c3e54ae9147908339128d278832737090ea09d29dc9b2fe216f"
+    }
+  ]
+}
