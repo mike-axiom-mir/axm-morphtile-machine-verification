@@ -1,0 +1,93 @@
+name: current growth round 9
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round9:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 6dcd2e3aff705d63a56c7cdf879d856805b84fbf
+          path: interface-pr16
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 2331597ac296c0a9495b5bb8fd5e9816a807256a
+          path: form-pr21
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: ec64af3f3ea6e7b8f713c481e365ade9facb4540
+          path: surface-pr19
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 740a0cc1446ebd5fd87f71f3fb72be60df3d8ab9
+          path: assembly-pr23
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 33625a6e98cdeb985635e0cdcfd5c754ad8505fe
+          path: round8-form
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 536a745ddea4d996d0daf193649db939fe3ade83
+          path: round8-surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: round8-capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 3f29f98b4125fe3376f02aabc509dc3da610deae
+          path: round8-interface
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 9 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round9.test.js 2>&1 | tee round9.log
+        env:
+          R9_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R9_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R9_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr16
+          R9_INTERFACE_COMMIT: 6dcd2e3aff705d63a56c7cdf879d856805b84fbf
+          R9_FORM_ROOT: ${{ github.workspace }}/form-pr21
+          R9_FORM_COMMIT: 2331597ac296c0a9495b5bb8fd5e9816a807256a
+          R9_SURFACE_ROOT: ${{ github.workspace }}/surface-pr19
+          R9_SURFACE_COMMIT: ec64af3f3ea6e7b8f713c481e365ade9facb4540
+          R9_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr23
+          R9_ASSEMBLY_COMMIT: 740a0cc1446ebd5fd87f71f3fb72be60df3d8ab9
+          R9_R8_FORM_ROOT: ${{ github.workspace }}/round8-form
+          R9_R8_FORM_COMMIT: 33625a6e98cdeb985635e0cdcfd5c754ad8505fe
+          R9_R8_SURFACE_ROOT: ${{ github.workspace }}/round8-surface
+          R9_R8_SURFACE_COMMIT: 536a745ddea4d996d0daf193649db939fe3ade83
+          R9_R8_CAPABILITY_ROOT: ${{ github.workspace }}/round8-capability
+          R9_R8_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          R9_R8_INTERFACE_ROOT: ${{ github.workspace }}/round8-interface
+          R9_R8_INTERFACE_COMMIT: 3f29f98b4125fe3376f02aabc509dc3da610deae
+      - name: Preserve round 9 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round9-log
+          path: verification/round9.log
+          if-no-files-found: error
