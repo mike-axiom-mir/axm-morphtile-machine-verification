@@ -6,7 +6,7 @@ const path = require("node:path");
 const { verifyFlowRuntimeExport } = require("../src/flow-runtime-conformance");
 
 const flowRepoPath = process.env.FLOW_MORPHTILE_REPO_PATH;
-const expectedFlowCommit = "0d21088b581c1dcd535842873f33421a14e858b7";
+const expectedFlowCommit = "23a91130ed07efc12573aa5c79f37540ef3ac921";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -46,7 +46,7 @@ function buildCommittedRuntime(Flow, MT) {
 test("valid Flowing runtime export passes independent semantic verification", {
   skip: flowRepoPath ? false : "set FLOW_MORPHTILE_REPO_PATH for pinned cross-repo verification"
 }, () => {
-  assert.equal(process.env.FLOW_MORPHTILE_COMMIT, expectedFlowCommit, "CI must verify the exact repaired Flowing runtime candidate head");
+  assert.equal(process.env.FLOW_MORPHTILE_COMMIT, expectedFlowCommit, "CI must verify the exact integrated Flowing convergence head");
   const MT = require(path.resolve(flowRepoPath, "core/morphtile.js"));
   const Flow = require(path.resolve(flowRepoPath, "experimental/flowing-runtime.js"));
   const runtime = buildCommittedRuntime(Flow, MT);
