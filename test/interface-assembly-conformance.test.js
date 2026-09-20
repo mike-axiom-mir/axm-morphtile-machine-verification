@@ -13,9 +13,13 @@ const env = {
 };
 const ready = Object.values(env).every(Boolean);
 
+function machineEntry(repoPath) {
+  return require(path.join(path.resolve(repoPath), "src"));
+}
+
 test("reports current Interface v0.5 to Assembly schema drift as a bounded verification FAIL/HOLD", { skip: !ready }, () => {
-  const interfaceMachine = require(path.resolve(env.interface));
-  const assemblyMachine = require(path.resolve(env.assembly));
+  const interfaceMachine = machineEntry(env.interface);
+  const assemblyMachine = machineEntry(env.assembly);
 
   const result = verifyInterfaceAssemblyCompatibility({
     interfaceMachine,
