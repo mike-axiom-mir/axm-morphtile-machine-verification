@@ -54,10 +54,11 @@ test("exact repaired Surface head independently rejects explicitly authored fals
   const { run } = loadSurface();
   for (const surface_rule of [false, null, 0, "", [], {}]) {
     const request = {
-      schema: "axm.morphtile.surface-request/v0.1",
+      envelope_version: "0.1",
       request_id: "verify-explicit-invalid-surface-rule",
+      goal: "Verify explicit invalid surface rules remain explicit",
       intent: { surface_rule },
-      available_capabilities: []
+      provenance: { caller: "verification-machine" }
     };
     const before = JSON.stringify(request);
     const out = run(request);
