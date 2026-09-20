@@ -5,7 +5,7 @@ function clone(value) {
 }
 
 function failure(code, detail, extra = {}) {
-  return { code, detail, ...extra };
+  return { ...extra, code, detail };
 }
 
 function firstHoldCode(result) {
@@ -66,7 +66,7 @@ function verifySurfaceIntentBoundary(machine, options = {}) {
   if (valid.threw || !valid.output || valid.output.status !== "CANDIDATE") {
     errors.push(failure("VALID_SURFACE_REQUEST_REJECTED", "Known-good bounded Surface intent did not produce a candidate.", {
       threw: valid.threw,
-      status: valid.output && valid.output.status || null
+      observed_status: valid.output && valid.output.status || null
     }));
   }
   if (valid.mutated) errors.push(failure("VALID_REQUEST_MUTATED", "Surface Machine mutated the caller request while validating it."));
@@ -78,8 +78,8 @@ function verifySurfaceIntentBoundary(machine, options = {}) {
   const unknownResult = runCase(machine, unknown);
   if (!unknownResult.output || unknownResult.output.status !== "HOLD" || firstHoldCode(unknownResult.output) !== "HOLD_SURFACE_INTENT_FIELD_UNKNOWN") {
     errors.push(failure("UNKNOWN_INTENT_FIELD_NOT_HELD", "Unknown top-level Surface intent must fail closed.", {
-      status: unknownResult.output && unknownResult.output.status || null,
-      code: firstHoldCode(unknownResult.output)
+      observed_status: unknownResult.output && unknownResult.output.status || null,
+      observed_code: firstHoldCode(unknownResult.output)
     }));
   }
   if (unknownResult.mutated) errors.push(failure("UNKNOWN_FIELD_REQUEST_MUTATED", "Unknown-field verification mutated the caller request."));
@@ -91,8 +91,8 @@ function verifySurfaceIntentBoundary(machine, options = {}) {
   const badVarResult = runCase(machine, badVar);
   if (!badVarResult.output || badVarResult.output.status !== "HOLD" || firstHoldCode(badVarResult.output) !== "HOLD_SURFACE_PAINT_VARS_INVALID") {
     errors.push(failure("PAINT_VAR_TYPE_NOT_HELD", "String paint vars must not be coerced into numeric runtime data.", {
-      status: badVarResult.output && badVarResult.output.status || null,
-      code: firstHoldCode(badVarResult.output)
+      observed_status: badVarResult.output && badVarResult.output.status || null,
+      observed_code: firstHoldCode(badVarResult.output)
     }));
   }
   checked.push("paint-vars-strict-number-type");
@@ -109,17 +109,17 @@ function verifySurfaceIntentBoundary(machine, options = {}) {
     request.intent.base_color = item.value;
     const observed = runCase(machine, request);
     const status = observed.output && observed.output.status || null;
-    const code = firstHoldCode(observed.output);
+    const holdCode = firstHoldCode(observed.output);
     const emittedColor = observed.output && observed.output.candidate && observed.output.candidate.value && observed.output.candidate.value.data
       ? observed.output.candidate.value.data.color
       : null;
-    coercionObserved.push({ id: item.id, input: item.value, status, code, emitted_color: emittedColor, mutated: observed.mutated });
-    if (!observed.output || status !== "HOLD" || code !== "HOLD_SURFACE_COLOR_INVALID") {
+    coercionObserved.push({ id: item.id, input: item.value, status, hold_code: holdCode, emitted_color: emittedColor, mutated: observed.mutated });
+    if (!observed.output || status !== "HOLD" || holdCode !== "HOLD_SURFACE_COLOR_INVALID") {
       errors.push(failure("BASE_COLOR_TYPE_COERCION", "Fail-closed base_color validation accepted a non-number channel and normalized it into candidate data.", {
         case: item.id,
         input: item.value,
-        status,
-        code,
+        observed_status: status,
+        observed_code: holdCode,
         emitted_color: emittedColor
       }));
     }
@@ -133,14 +133,70 @@ function verifySurfaceIntentBoundary(machine, options = {}) {
   const outOfRangeResult = runCase(machine, outOfRange);
   if (!outOfRangeResult.output || outOfRangeResult.output.status !== "HOLD" || firstHoldCode(outOfRangeResult.output) !== "HOLD_SURFACE_COLOR_INVALID") {
     errors.push(failure("BASE_COLOR_RANGE_NOT_HELD", "Out-of-range numeric base_color must fail closed.", {
-      status: outOfRangeResult.output && outOfRangeResult.output.status || null,
-      code: firstHoldCode(outOfRangeResult.output)
+      observed_status: outOfRangeResult.output && outOfRangeResult.output.status || null,
+      observed_code: firstHoldCode(outOfRangeResult.output)
     }));
   }
   checked.push("base-color-range");
 
+  const validRule = clone(base);
+  validRule.request_id = "verification-surface-rule-valid";
+  delete validRule.intent.base_color;
+  delete validRule.intent.paint;
+  validRule.intent.surface_rule = {
+    kind: "facing",
+    direction: "up",
+    threshold: 0.6,
+    match_color: [0.9, 0.8, 0.7],
+    else_color: [0.1, 0.2, 0.3]
+  };
+  const validRuleResult = runCase(machine, validRule);
+  if (!validRuleResult.output || validRuleResult.output.status !== "CANDIDATE") {
+    errors.push(failure("VALID_SURFACE_RULE_REJECTED", "Known-good named facing rule did not produce a candidate.", {
+      observed_status: validRuleResult.output && validRuleResult.output.status || null,
+      observed_code: firstHoldCode(validRuleResult.output)
+    }));
+  }
+
+  const ruleTypeCases = [
+    {
+      id: "threshold-string",
+      mutate(rule) { rule.threshold = "0.6"; },
+      expectedHold: "HOLD_SURFACE_RULE_THRESHOLD_INVALID"
+    },
+    {
+      id: "match-color-null",
+      mutate(rule) { rule.match_color = [null, 0.8, 0.7]; },
+      expectedHold: "HOLD_SURFACE_RULE_COLOR_INVALID"
+    }
+  ];
+  const ruleTypeObserved = [];
+  for (const item of ruleTypeCases) {
+    const request = clone(validRule);
+    request.request_id = "verification-surface-rule-" + item.id;
+    item.mutate(request.intent.surface_rule);
+    const observed = runCase(machine, request);
+    const status = observed.output && observed.output.status || null;
+    const holdCode = firstHoldCode(observed.output);
+    const normalizedRule = observed.output && Array.isArray(observed.output.evidence)
+      ? (observed.output.evidence.find((entry) => entry && entry.rule) || {}).rule || null
+      : null;
+    ruleTypeObserved.push({ id: item.id, status, hold_code: holdCode, normalized_rule: normalizedRule, mutated: observed.mutated });
+    if (!observed.output || status !== "HOLD" || holdCode !== item.expectedHold) {
+      errors.push(failure("SURFACE_RULE_TYPE_COERCION", "Named surface rule accepted a non-number numeric field instead of failing closed.", {
+        case: item.id,
+        expected_hold: item.expectedHold,
+        observed_status: status,
+        observed_code: holdCode,
+        normalized_rule: normalizedRule
+      }));
+    }
+    if (observed.mutated) errors.push(failure("SURFACE_RULE_REQUEST_MUTATED", "Surface rule type test mutated the caller request.", { case: item.id }));
+  }
+  checked.push("surface-rule-strict-number-types");
+
   const receipt = {
-    schema: "axm.morphtile.surface-intent-conformance-receipt/v0.1",
+    schema: "axm.morphtile.surface-intent-conformance-receipt/v0.2",
     expected_machine_version: expectedVersion,
     observed_machine_version: machine.MACHINE && machine.MACHINE.version || null,
     valid_status: valid.output && valid.output.status || null,
@@ -150,7 +206,9 @@ function verifySurfaceIntentBoundary(machine, options = {}) {
     paint_var_string_code: firstHoldCode(badVarResult.output),
     base_color_type_cases: coercionObserved,
     out_of_range_status: outOfRangeResult.output && outOfRangeResult.output.status || null,
-    out_of_range_code: firstHoldCode(outOfRangeResult.output)
+    out_of_range_code: firstHoldCode(outOfRangeResult.output),
+    valid_surface_rule_status: validRuleResult.output && validRuleResult.output.status || null,
+    surface_rule_type_cases: ruleTypeObserved
   };
 
   return { status: errors.length ? "FAIL" : "PASS", checked, errors, receipt };
