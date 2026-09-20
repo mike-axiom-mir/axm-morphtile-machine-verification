@@ -1,0 +1,54 @@
+name: current convergence 2026-09-20
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-convergence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 86328f7c773cc67a7ed14e07fbebcfc74957860b
+          path: core-pr12
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 26b89a77f6a90715a6742dc4d084008ba63731b6
+          path: core-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 555f4eeedbb383c90776581fe1c5a32b412905c9
+          path: surface-pr13
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: e3abd9e8e4fad755c741dd9fe42d6601fb5f2bfc
+          path: form-pr14
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify exact repaired and re-pinned boundaries
+        working-directory: verification
+        run: node --test test/current-convergence-20260920.test.js
+        env:
+          ACTION_CORE_PATH: ${{ github.workspace }}/core-pr12/core/morphtile.js
+          ACTION_CORE_COMMIT: 86328f7c773cc67a7ed14e07fbebcfc74957860b
+          CURRENT_CORE_PATH: ${{ github.workspace }}/core-main/core/morphtile.js
+          CURRENT_CORE_COMMIT: 26b89a77f6a90715a6742dc4d084008ba63731b6
+          SURFACE_ROOT: ${{ github.workspace }}/surface-pr13
+          SURFACE_COMMIT: 555f4eeedbb383c90776581fe1c5a32b412905c9
+          FORM_ROOT: ${{ github.workspace }}/form-pr14
+          FORM_COMMIT: e3abd9e8e4fad755c741dd9fe42d6601fb5f2bfc
+      - name: Keep the aggregate verifier suite green without integration env leakage
+        working-directory: verification
+        run: npm test
