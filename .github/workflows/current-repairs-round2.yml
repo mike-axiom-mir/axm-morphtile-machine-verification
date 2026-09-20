@@ -1,0 +1,66 @@
+name: Current repaired boundaries round 2
+
+on:
+  pull_request:
+  push:
+    branches:
+      - verification/current-repairs-round2-20260920
+
+permissions:
+  contents: read
+
+jobs:
+  current-repairs-round2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 87ffd5192bf32936fc1418c45d7e3345c572a180
+          path: .runtime/core-pr13
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 28fc911b9d0ff104e26b62daacdcf096fd2dee86
+          path: .runtime/surface-pr12
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 39024ee1a0e0f4472a798accf3d3a0254a43e216
+          path: .runtime/form-v09
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 2ae5b22845aef003a49318da42efb039e27c2e3c
+          path: .runtime/assembly-v16
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify repaired core, Surface stripes evidence, and Form v0.9 portable closure
+        run: node --test test/current-repairs-round2.test.js
+        env:
+          REPAIRED_CORE_PATH: ${{ github.workspace }}/.runtime/core-pr13/core/morphtile.js
+          REPAIRED_CORE_COMMIT: 87ffd5192bf32936fc1418c45d7e3345c572a180
+          SURFACE_V12_REPO_PATH: ${{ github.workspace }}/.runtime/surface-pr12
+          SURFACE_V12_COMMIT: 28fc911b9d0ff104e26b62daacdcf096fd2dee86
+          SURFACE_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-main/core/morphtile.js
+          SURFACE_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          FORM_V09_MACHINE_PATH: ${{ github.workspace }}/.runtime/form-v09/src
+          FORM_V09_COMMIT: 39024ee1a0e0f4472a798accf3d3a0254a43e216
+          ASSEMBLY_V16_MACHINE_PATH: ${{ github.workspace }}/.runtime/assembly-v16/src
+          ASSEMBLY_V16_COMMIT: 2ae5b22845aef003a49318da42efb039e27c2e3c
+          ASSEMBLY_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-main/core/morphtile.js
+          ASSEMBLY_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
