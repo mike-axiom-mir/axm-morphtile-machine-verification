@@ -1,0 +1,72 @@
+name: current repairs round 6
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-repairs-round6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 5f4064364f216b4e83bd29b157d935265cc56d43
+          path: surface-pr16
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: f3b246894d3bafcb5918764cdb31fb44f436d448
+          path: core-pr15
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: f6e48a23da5a46d5f89aace920c906128cdc6669
+          path: interface-pr13
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 688a39fc9762b2192d7db9f777416dafe5bf6ed7
+          path: assembly-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: e1043898bb69bf17a8b678e8a0f982f9d8082676
+          path: assembly-pr21
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 6adea73ea3a396aa60fc6207372ba7ea611c60fc
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 429a344f7d9333bef01cf9de1c292c3af09abec2
+          path: core-main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify repaired and current convergence boundaries
+        working-directory: verification
+        run: node --test test/current-repairs-round6-corrected.test.js
+        env:
+          R6_SURFACE_ROOT: ${{ github.workspace }}/surface-pr16
+          R6_SURFACE_COMMIT: 5f4064364f216b4e83bd29b157d935265cc56d43
+          R6_CORE_PR15_PATH: ${{ github.workspace }}/core-pr15/core/morphtile.js
+          R6_CORE_PR15_COMMIT: f3b246894d3bafcb5918764cdb31fb44f436d448
+          R6_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr13
+          R6_INTERFACE_COMMIT: f6e48a23da5a46d5f89aace920c906128cdc6669
+          R6_ASSEMBLY_MAIN_ROOT: ${{ github.workspace }}/assembly-main
+          R6_ASSEMBLY_MAIN_COMMIT: 688a39fc9762b2192d7db9f777416dafe5bf6ed7
+          R6_ASSEMBLY_PR21_ROOT: ${{ github.workspace }}/assembly-pr21
+          R6_ASSEMBLY_PR21_COMMIT: e1043898bb69bf17a8b678e8a0f982f9d8082676
+          R6_FORM_ROOT: ${{ github.workspace }}/form-main
+          R6_FORM_COMMIT: 6adea73ea3a396aa60fc6207372ba7ea611c60fc
+          R6_CORE_MAIN_PATH: ${{ github.workspace }}/core-main/core/morphtile.js
+          R6_CORE_MAIN_COMMIT: 429a344f7d9333bef01cf9de1c292c3af09abec2
