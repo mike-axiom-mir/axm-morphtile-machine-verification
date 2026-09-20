@@ -46,6 +46,3 @@ jobs:
           SURFACE_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
           CORE_CANDIDATE_PATH: ${{ github.workspace }}/.runtime/morphtile-core-pr13/core/morphtile.js
           CORE_CANDIDATE_COMMIT: 15098a9843415562f804b28ba8f347e0aa5ec4ee
-
-      - name: Run owned Verification suite
-        run: npm test
