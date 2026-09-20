@@ -62,14 +62,14 @@ test("kit checker fails a false advertised hash before trusting producer evidenc
   assert.ok(report.errors.some(error => error.code === "KIT_HASH_MISMATCH"));
 });
 
-const corePath = process.env.MORPHTILE_CORE_PATH;
+const kitCorePath = process.env.KIT_MORPHTILE_CORE_PATH;
 const assemblyPath = process.env.ASSEMBLY_REPO_PATH;
 
-test("Assembly Machine kit output passes independent pinned-runtime verification", { skip: !(corePath && assemblyPath) }, () => {
-  assert.equal(process.env.MORPHTILE_COMMIT, "13d83a2b2c0d12644442d3d9e45bcbe0af19876a");
+test("Assembly Machine kit output passes independent pinned-runtime verification", { skip: !(kitCorePath && assemblyPath) }, () => {
+  assert.equal(process.env.KIT_MORPHTILE_COMMIT, "13d83a2b2c0d12644442d3d9e45bcbe0af19876a");
   assert.equal(process.env.ASSEMBLY_COMMIT, "0ae941c3ebc2293bbe974a309bdd27a97b4f3fd0");
 
-  const MT = require(path.resolve(corePath));
+  const MT = require(path.resolve(kitCorePath));
   const assembly = require(path.join(path.resolve(assemblyPath), "src"));
   const { materializeKit } = require(path.join(path.resolve(assemblyPath), "src/kit"));
   const baseRequest = require(path.join(path.resolve(assemblyPath), "fixtures/request.assembly.json"));
@@ -103,8 +103,8 @@ test("Assembly Machine kit output passes independent pinned-runtime verification
   assert.equal(report.receipt.tamper_status, "HOLD_HASH_MISMATCH");
 });
 
-test("Assembly Machine refuses kit materialization when arbitrary dependency closure would be dropped", { skip: !(corePath && assemblyPath) }, () => {
-  const MT = require(path.resolve(corePath));
+test("Assembly Machine refuses kit materialization when arbitrary dependency closure would be dropped", { skip: !(kitCorePath && assemblyPath) }, () => {
+  const MT = require(path.resolve(kitCorePath));
   const assembly = require(path.join(path.resolve(assemblyPath), "src"));
   const { materializeKit } = require(path.join(path.resolve(assemblyPath), "src/kit"));
   const baseRequest = require(path.join(path.resolve(assemblyPath), "fixtures/request.assembly.json"));
