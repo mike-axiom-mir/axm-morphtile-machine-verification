@@ -1,0 +1,48 @@
+name: Producer boundary conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - verification/render-provenance-finite-progression
+
+permissions:
+  contents: read
+
+jobs:
+  producer-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 1b4645f7ddeb0aa9e7e27656a74ae2cbbb02312b
+          path: .runtime/surface
+
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: d5c11adc65ecda9a146d72d23fc021ba96161c5b
+          path: .runtime/form
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify exact producer boundaries
+        run: node --test test/producer-boundary-conformance.test.js
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          SURFACE_REPO_PATH: ${{ github.workspace }}/.runtime/surface
+          SURFACE_COMMIT: 1b4645f7ddeb0aa9e7e27656a74ae2cbbb02312b
+          FORM_REPO_PATH: ${{ github.workspace }}/.runtime/form
+          FORM_COMMIT: d5c11adc65ecda9a146d72d23fc021ba96161c5b
