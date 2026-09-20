@@ -1,0 +1,31 @@
+name: cold-matter-evidence-conformance
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-cold
+          sparse-checkout: |
+            core
+            experimental
+            evidence/cold-matter-measurement.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Cold Matter evidence and corruption conformance
+        run: node --test test/cold-matter-evidence-conformance.test.js
+        env:
+          COLD_MATTER_REPO_PATH: ${{ github.workspace }}/.runtime/morphtile-cold
+          COLD_MATTER_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
