@@ -50,47 +50,71 @@ function requestEnvelope(requestId, intent) {
 }
 
 const hasCorePr16 = !!process.env.R7_CORE_PR16_PATH;
-test("MorphTile PR #16: own-key kit repair still accepts removal of a missing inherited-looking word", { skip: !hasCorePr16 }, () => {
+test("MorphTile PR #16: own-key registry semantics remain unsafe for inherited-looking word names", { skip: !hasCorePr16 }, () => {
   assert.equal(process.env.R7_CORE_PR16_COMMIT, CORE_PR16);
   const MT = require(path.resolve(process.env.R7_CORE_PR16_PATH));
   const ws = MT.createWorkspace(MT.createWorld("Verification own-key registry"));
 
+  // Ordinary registry control: a non-special word still crosses edit -> plan -> commit.
   applyOperation(MT, ws, { op: "word.define", name: "alpha", args: [], body: 1 }, "seed-alpha");
   assert.equal(hasOwn(ws.live.words, "alpha"), true);
   assert.equal(hasOwn(ws.live.words, "constructor"), false);
 
+  // Attack A: a missing inherited-looking name is not an authored own word. The
+  // exact PR head nevertheless accepts word.remove because its existence check
+  // still reads through Object.prototype. The edit changes nothing and must not
+  // mutate canonical matter.
   const canonicalBefore = MT.structHash(ws.live);
-  const candidate = MT.cloneBody(ws, "verification", "missing-constructor-remove");
-  const edited = MT.editCandidate(ws, candidate, { op: "word.remove", name: "constructor" });
-
-  // The safe contract is to reject a removal for a name that is not an own
-  // authored word. This exact candidate instead treats Object.prototype's
-  // inherited constructor as if it established word existence, then succeeds
-  // after deleting nothing. Verification records that producer/core FAIL/HOLD
-  // explicitly rather than repairing the candidate here.
-  const acceptedMissingInheritedName = edited.ok === true;
-  assert.equal(acceptedMissingInheritedName, true, "exact PR #16 head no longer reproduces the expected registry existence gap");
-  assert.equal(MT.structHash(ws.live), canonicalBefore, "candidate verification must not mutate canonical world matter");
+  const removeCandidate = MT.cloneBody(ws, "verification", "missing-constructor-remove");
+  const removeEdited = MT.editCandidate(ws, removeCandidate, { op: "word.remove", name: "constructor" });
+  const acceptedMissingInheritedName = removeEdited.ok === true;
+  const canonicalUnchangedDuringRemoveAttack = MT.structHash(ws.live) === canonicalBefore;
+  assert.equal(acceptedMissingInheritedName, true, "exact PR #16 head no longer reproduces inherited-name removal acceptance");
+  assert.equal(canonicalUnchangedDuringRemoveAttack, true, "candidate attack must not mutate canonical world matter");
   assert.equal(hasOwn(ws.live.words, "constructor"), false);
 
-  // Positive control: an actually authored own `constructor` word is legitimate
-  // registry data and can be defined and removed through the same public path.
-  applyOperation(MT, ws, { op: "word.define", name: "constructor", args: [], body: 22 }, "define-own-constructor");
-  assert.equal(hasOwn(ws.live.words, "constructor"), true);
-  applyOperation(MT, ws, { op: "word.remove", name: "constructor" }, "remove-own-constructor");
+  // Attack B: the write helper itself can now author an own `constructor` key in
+  // the candidate, but the following plan boundary still resolves the prior
+  // registry value through inherited lookup. It attempts to clone the inherited
+  // Function and throws (`JSON.stringify(function) -> undefined`). This is a
+  // producer/core failure, not a verifier failure, and is preserved explicitly.
+  const defineCandidate = MT.cloneBody(ws, "verification", "define-own-constructor");
+  const defineEdited = MT.editCandidate(ws, defineCandidate, { op: "word.define", name: "constructor", args: [], body: 22 });
+  assert.equal(defineEdited.ok, true, defineEdited.error || JSON.stringify(defineEdited));
+  assert.equal(hasOwn(ws.candidates[defineCandidate].world.words, "constructor"), true);
+  assert.equal(ws.candidates[defineCandidate].world.words.constructor.body, 22);
+
+  let planThrew = false;
+  let planError = null;
+  try {
+    MT.planMerge(ws, [defineCandidate]);
+  } catch (err) {
+    planThrew = true;
+    planError = String(err && err.message ? err.message : err);
+  }
+  assert.equal(planThrew, true, "exact PR #16 head no longer reproduces reserved-key planMerge failure");
+  assert.match(planError || "", /undefined.*valid JSON|valid JSON.*undefined/i);
+  assert.equal(MT.structHash(ws.live), canonicalBefore, "failed planning must leave canonical world unchanged");
   assert.equal(hasOwn(ws.live.words, "constructor"), false);
   assert.equal(hasOwn(ws.live.words, "alpha"), true);
 
   console.log(JSON.stringify({
-    schema: "axm.morphtile.verification/core-kit-own-key-round7/v0.1",
+    schema: "axm.morphtile.verification/core-kit-own-key-round7/v0.2",
     target_commit: CORE_PR16,
     status: "FAIL",
-    failure: "CORE_WORD_REMOVE_INHERITED_NAME_ACCEPTED",
+    failures: [
+      "CORE_WORD_REMOVE_INHERITED_NAME_ACCEPTED",
+      "CORE_WORD_CONSTRUCTOR_PLANMERGE_THROWS"
+    ],
     observed: {
       missing_constructor_is_own_word: false,
-      removal_candidate_accepted: acceptedMissingInheritedName,
-      canonical_unchanged_during_attack: MT.structHash(ws.live) !== null,
-      positive_own_constructor_define_remove: true
+      missing_constructor_removal_accepted: acceptedMissingInheritedName,
+      canonical_unchanged_during_remove_attack: canonicalUnchangedDuringRemoveAttack,
+      own_constructor_authored_in_candidate: true,
+      plan_merge_threw: planThrew,
+      plan_error: planError,
+      canonical_unchanged_after_plan_failure: MT.structHash(ws.live) === canonicalBefore,
+      ordinary_alpha_control_committed: hasOwn(ws.live.words, "alpha")
     },
     placement: "MORPHTILE_CORE_PR16"
   }));
@@ -296,7 +320,9 @@ test("Interface PR #14: conditional visibility follows canonical state and canno
   // Separate fail-safe attack: Interface may transport an explicitly declared
   // symbolic action name, but a conditional container must not grant runtime
   // authority when dependency discharge is bypassed. `lit` is output-only on
-  // the canonical tower, so current core must keep it inert even while visible.
+  // the canonical tower. Once the conditional is true, current core is allowed
+  // to collapse the unsupported action to an explicit v-missing marker; the
+  // critical requirement is that no actionable data-signal appears.
   const unsafe = iface.run(requestEnvelope("r7-interface-when-output-action", {
     tile_path: "mt_tower",
     title: "Conditional authority attack",
@@ -320,7 +346,7 @@ test("Interface PR #14: conditional visibility follows canonical state and canno
   assert.equal(bypassCommit.ok, true);
   MT.act(ws2, { do: "signal", tile: "mt_tower", name: "toggle" });
   const bypassHtml = MT.vnodeToHTML(MT.compilePanel(ws2.live).root);
-  assert.match(bypassHtml, /Output-only action/);
+  assert.match(bypassHtml, /no exposed action called lit/);
   assert.doesNotMatch(bypassHtml, /data-signal="mt_tower:lit"/, "conditional visibility must not create action authority");
 
   console.log(JSON.stringify({
@@ -333,7 +359,8 @@ test("Interface PR #14: conditional visibility follows canonical state and canno
       "canonical-state-hidden-visible-hidden",
       "render-read-only",
       "exact-rollback",
-      "output-only-action-remains-inert-under-proof-bypass"
+      "output-only-action-collapses-to-explicit-missing-under-proof-bypass",
+      "output-only-action-never-gains-data-signal-authority"
     ],
     visual_quality: "NOT_TESTED",
     placement: "INTERFACE_MACHINE_PLUS_CORE_FAILSAFE"
