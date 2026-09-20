@@ -12,7 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 4346df01ed18cd1336064f9323d7766ff4f6338a
+          path: .runtime/morphtile
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm test
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 4346df01ed18cd1336064f9323d7766ff4f6338a
