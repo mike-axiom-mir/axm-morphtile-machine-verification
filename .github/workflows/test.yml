@@ -37,6 +37,14 @@ jobs:
           repository: mike-axiom-mir/axm-morphtile
           ref: 23a91130ed07efc12573aa5c79f37540ef3ac921
           path: .runtime/morphtile-flow
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 8d6a561a214ae39c77d5552bd29822a58829b9c8
+          path: .runtime/surface
+          sparse-checkout: |
+            src
+            machine.json
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -54,3 +62,5 @@ jobs:
           CAPABILITY_MORPHTILE_COMMIT: 4346df01ed18cd1336064f9323d7766ff4f6338a
           FLOW_MORPHTILE_REPO_PATH: ${{ github.workspace }}/.runtime/morphtile-flow
           FLOW_MORPHTILE_COMMIT: 23a91130ed07efc12573aa5c79f37540ef3ac921
+          SURFACE_REPO_PATH: ${{ github.workspace }}/.runtime/surface
+          SURFACE_COMMIT: 8d6a561a214ae39c77d5552bd29822a58829b9c8
