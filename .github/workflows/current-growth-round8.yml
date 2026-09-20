@@ -1,0 +1,58 @@
+name: current growth round 8
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: a95267df9a42f35d32860e5f1bf99697e8ea9755
+          path: interface-pr15
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 8ccabaac63308310155fc605644273e75f9cdf37
+          path: form-pr20
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: d4483ae7d3f282e16903c76704e46ec4521e76d1
+          path: assembly-pr22
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 8 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round8.test.js 2>&1 | tee round8.log
+        env:
+          R8_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R8_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R8_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr15
+          R8_INTERFACE_COMMIT: a95267df9a42f35d32860e5f1bf99697e8ea9755
+          R8_FORM_ROOT: ${{ github.workspace }}/form-pr20
+          R8_FORM_COMMIT: 8ccabaac63308310155fc605644273e75f9cdf37
+          R8_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr22
+          R8_ASSEMBLY_COMMIT: d4483ae7d3f282e16903c76704e46ec4521e76d1
+      - name: Preserve round 8 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round8-log
+          path: verification/round8.log
+          if-no-files-found: error
