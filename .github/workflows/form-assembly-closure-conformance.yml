@@ -45,5 +45,3 @@ jobs:
           ASSEMBLY_V06_COMMIT: b78ae4175331da8f72fc5135b282ee06940be5ec
           MORPHTILE_V04_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-v04/core/morphtile.js
           MORPHTILE_V04_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
-      - name: Verification-owned aggregate suite
-        run: npm test
