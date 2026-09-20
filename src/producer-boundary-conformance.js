@@ -105,7 +105,8 @@ function verifySurfaceRenderEvidenceProvenance(renderTool, MorphTile, options = 
   checked.push("producer-pixel-baseline");
 
   let mismatchRejected = null;
-  if (producer && producer.repository === expectedProducer.repository && producer.commit === surfaceCommit) {
+  const explicitIdentityContract = typeof renderTool.requireProducerIdentity === "function";
+  if (explicitIdentityContract && producer && producer.repository === expectedProducer.repository && producer.commit === surfaceCommit) {
     const wrongProducer = {
       repository: expectedProducer.repository,
       commit: surfaceCommit === "0000000000000000000000000000000000000000"
