@@ -54,7 +54,7 @@ jobs:
           node-version: 20
       - name: Verify repaired and current convergence boundaries
         working-directory: verification
-        run: node --test test/current-repairs-round6.test.js
+        run: node --test test/current-repairs-round6-corrected.test.js
         env:
           R6_SURFACE_ROOT: ${{ github.workspace }}/surface-pr16
           R6_SURFACE_COMMIT: 5f4064364f216b4e83bd29b157d935265cc56d43
