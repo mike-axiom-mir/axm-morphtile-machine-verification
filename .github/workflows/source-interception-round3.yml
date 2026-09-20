@@ -1,0 +1,65 @@
+name: source interception round 3
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source-interception-round3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 20245de80c6a866d7bd8ed2508a2c4e2fbc897cd
+          path: surface-pr15-repaired
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: b8c26f06671ec6ce034c0956d3b34a3bd80ebf47
+          path: form-pr17
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: d1ffb78b64104a696f6ff6f1ef50f0b4e73caa32
+          path: interface-pr11
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 1b81da5e3c885a904236cc643c910b83ad0d7bc6
+          path: assembly-main-receiver
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: cc95e92965e896638bb27c8492d1bda43b7fc8e4
+          path: assembly-pr20
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 429a344f7d9333bef01cf9de1c292c3af09abec2
+          path: core-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify repaired and Proxy source-interception boundaries
+        working-directory: verification
+        run: node --test test/source-interception-round3.test.js
+        env:
+          SOURCE_R3_SURFACE_ROOT: ${{ github.workspace }}/surface-pr15-repaired
+          SOURCE_R3_SURFACE_COMMIT: 20245de80c6a866d7bd8ed2508a2c4e2fbc897cd
+          SOURCE_R3_FORM_ROOT: ${{ github.workspace }}/form-pr17
+          SOURCE_R3_FORM_COMMIT: b8c26f06671ec6ce034c0956d3b34a3bd80ebf47
+          SOURCE_R3_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr11
+          SOURCE_R3_INTERFACE_COMMIT: d1ffb78b64104a696f6ff6f1ef50f0b4e73caa32
+          SOURCE_R3_ASSEMBLY_RECEIVER_ROOT: ${{ github.workspace }}/assembly-main-receiver
+          SOURCE_R3_ASSEMBLY_RECEIVER_COMMIT: 1b81da5e3c885a904236cc643c910b83ad0d7bc6
+          SOURCE_R3_ASSEMBLY_CANDIDATE_ROOT: ${{ github.workspace }}/assembly-pr20
+          SOURCE_R3_ASSEMBLY_CANDIDATE_COMMIT: cc95e92965e896638bb27c8492d1bda43b7fc8e4
+          SOURCE_R3_CORE_PATH: ${{ github.workspace }}/core-current/core/morphtile.js
+          SOURCE_R3_CORE_COMMIT: 429a344f7d9333bef01cf9de1c292c3af09abec2
