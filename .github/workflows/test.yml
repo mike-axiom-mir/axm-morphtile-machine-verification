@@ -27,6 +27,16 @@ jobs:
           repository: mike-axiom-mir/axm-morphtile-machine-assembly
           ref: 0ae941c3ebc2293bbe974a309bdd27a97b4f3fd0
           path: .runtime/assembly
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: 6446f355f4aeea676269524d410ea42e17324737
+          path: .runtime/capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 5cd57f6c3850525a291e513afaad04b5193e5555
+          path: .runtime/morphtile-flow
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -38,3 +48,9 @@ jobs:
           KIT_MORPHTILE_COMMIT: 13d83a2b2c0d12644442d3d9e45bcbe0af19876a
           ASSEMBLY_REPO_PATH: ${{ github.workspace }}/.runtime/assembly
           ASSEMBLY_COMMIT: 0ae941c3ebc2293bbe974a309bdd27a97b4f3fd0
+          CAPABILITY_REPO_PATH: ${{ github.workspace }}/.runtime/capability
+          CAPABILITY_COMMIT: 6446f355f4aeea676269524d410ea42e17324737
+          CAPABILITY_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-hash/core/morphtile.js
+          CAPABILITY_MORPHTILE_COMMIT: 4346df01ed18cd1336064f9323d7766ff4f6338a
+          FLOW_MORPHTILE_REPO_PATH: ${{ github.workspace }}/.runtime/morphtile-flow
+          FLOW_MORPHTILE_COMMIT: 5cd57f6c3850525a291e513afaad04b5193e5555
