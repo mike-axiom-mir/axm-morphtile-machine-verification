@@ -1,0 +1,58 @@
+name: source integrity round 4
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source-integrity-round4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 3026016693e1132c219876c92cd24b801aa7d25f
+          path: surface-pr15-repaired
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: f2fe446cf67310ad23e1e6fccf9866160b3fafac
+          path: form-pr17-repaired
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: d8c06b9d1db6d0350c4b443b562be19fb67d4e6f
+          path: interface-pr12
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 2ac0df773c8318b46945fb5814b7c5d4b78a3e10
+          path: assembly-pr20
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 429a344f7d9333bef01cf9de1c292c3af09abec2
+          path: core-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify repaired current source-integrity boundaries
+        working-directory: verification
+        run: node --test test/source-integrity-round4.test.js
+        env:
+          SOURCE_R4_SURFACE_ROOT: ${{ github.workspace }}/surface-pr15-repaired
+          SOURCE_R4_SURFACE_COMMIT: 3026016693e1132c219876c92cd24b801aa7d25f
+          SOURCE_R4_FORM_ROOT: ${{ github.workspace }}/form-pr17-repaired
+          SOURCE_R4_FORM_COMMIT: f2fe446cf67310ad23e1e6fccf9866160b3fafac
+          SOURCE_R4_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr12
+          SOURCE_R4_INTERFACE_COMMIT: d8c06b9d1db6d0350c4b443b562be19fb67d4e6f
+          SOURCE_R4_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr20
+          SOURCE_R4_ASSEMBLY_COMMIT: 2ac0df773c8318b46945fb5814b7c5d4b78a3e10
+          SOURCE_R4_CORE_PATH: ${{ github.workspace }}/core-current/core/morphtile.js
+          SOURCE_R4_CORE_COMMIT: 429a344f7d9333bef01cf9de1c292c3af09abec2
