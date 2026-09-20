@@ -5,7 +5,7 @@ const { verifySurfaceIntentBoundary } = require("../src/surface-intent-conforman
 
 const SURFACE_REPO_PATH = process.env.SURFACE_REPO_PATH;
 const SURFACE_COMMIT = process.env.SURFACE_COMMIT;
-const EXPECTED_SURFACE_COMMIT = "5e831c968cb28d6445fb878e068c63115e0b1de7";
+const EXPECTED_SURFACE_COMMIT = "35e4c9f464f13d6778f1f82d340e5cd63c86ee7a";
 
 function loadSurface() {
   assert.ok(SURFACE_REPO_PATH, "SURFACE_REPO_PATH is required for pinned cross-repo verification");
@@ -30,47 +30,14 @@ test("repaired pinned Surface v0.3 candidate independently fails closed on autho
   ]);
 
   assert.deepEqual(result.receipt.base_color_type_cases, [
-    {
-      id: "string",
-      input: ["0.2", 0.25, 0.3],
-      status: "HOLD",
-      hold_code: "HOLD_SURFACE_COLOR_INVALID",
-      emitted_color: null,
-      mutated: false
-    },
-    {
-      id: "boolean",
-      input: [false, 0.25, 0.3],
-      status: "HOLD",
-      hold_code: "HOLD_SURFACE_COLOR_INVALID",
-      emitted_color: null,
-      mutated: false
-    },
-    {
-      id: "null",
-      input: [null, 0.25, 0.3],
-      status: "HOLD",
-      hold_code: "HOLD_SURFACE_COLOR_INVALID",
-      emitted_color: null,
-      mutated: false
-    }
+    { id: "string", input: ["0.2", 0.25, 0.3], status: "HOLD", hold_code: "HOLD_SURFACE_COLOR_INVALID", emitted_color: null, mutated: false },
+    { id: "boolean", input: [false, 0.25, 0.3], status: "HOLD", hold_code: "HOLD_SURFACE_COLOR_INVALID", emitted_color: null, mutated: false },
+    { id: "null", input: [null, 0.25, 0.3], status: "HOLD", hold_code: "HOLD_SURFACE_COLOR_INVALID", emitted_color: null, mutated: false }
   ]);
 
   assert.deepEqual(result.receipt.surface_rule_type_cases, [
-    {
-      id: "threshold-string",
-      status: "HOLD",
-      hold_code: "HOLD_SURFACE_RULE_THRESHOLD_INVALID",
-      normalized_rule: null,
-      mutated: false
-    },
-    {
-      id: "match-color-null",
-      status: "HOLD",
-      hold_code: "HOLD_SURFACE_RULE_COLOR_INVALID",
-      normalized_rule: null,
-      mutated: false
-    }
+    { id: "threshold-string", status: "HOLD", hold_code: "HOLD_SURFACE_RULE_THRESHOLD_INVALID", normalized_rule: null, mutated: false },
+    { id: "match-color-null", status: "HOLD", hold_code: "HOLD_SURFACE_RULE_COLOR_INVALID", normalized_rule: null, mutated: false }
   ]);
 
   assert.equal(result.receipt.valid_status, "CANDIDATE");
@@ -81,4 +48,22 @@ test("repaired pinned Surface v0.3 candidate independently fails closed on autho
   assert.equal(result.receipt.paint_var_string_code, "HOLD_SURFACE_PAINT_VARS_INVALID");
   assert.equal(result.receipt.out_of_range_status, "HOLD");
   assert.equal(result.receipt.out_of_range_code, "HOLD_SURFACE_COLOR_INVALID");
+});
+
+test("exact repaired Surface head independently rejects explicitly authored falsey rules", () => {
+  const { run } = loadSurface();
+  for (const surface_rule of [false, null, 0, "", [], {}]) {
+    const request = {
+      schema: "axm.morphtile.surface-request/v0.1",
+      request_id: "verify-explicit-invalid-surface-rule",
+      intent: { surface_rule },
+      available_capabilities: []
+    };
+    const before = JSON.stringify(request);
+    const out = run(request);
+    assert.equal(out.status, "HOLD", JSON.stringify(surface_rule));
+    assert.equal(out.candidate, null);
+    assert.match(out.holds[0].code, /^HOLD_SURFACE_RULE_/);
+    assert.equal(JSON.stringify(request), before, "verifier request must remain immutable");
+  }
 });
