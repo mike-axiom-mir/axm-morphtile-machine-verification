@@ -1,0 +1,39 @@
+name: capability-default-wake-conformance
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  capability-default-wake-conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: .runtime/capability-default-wake
+          sparse-checkout: |
+            src
+            machine.json
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-default-wake
+          sparse-checkout: |
+            core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify visible machine default versus raw substrate omission
+        run: node --test test/capability-default-wake-conformance.test.js
+        env:
+          CAPABILITY_DEFAULT_WAKE_REPO_PATH: ${{ github.workspace }}/.runtime/capability-default-wake
+          CAPABILITY_DEFAULT_WAKE_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CAPABILITY_DEFAULT_WAKE_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-default-wake/core/morphtile.js
+          CAPABILITY_DEFAULT_WAKE_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
