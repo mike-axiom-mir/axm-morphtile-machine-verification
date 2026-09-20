@@ -1,0 +1,51 @@
+name: current non-finite boundaries
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-nonfinite-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 8ca51aedbc7c82cdd5969aa44490912609227405
+          path: core-pr14
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: c2c4d0a6e77945c0828abd76d4805049c4bde982
+          path: surface-pr14
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 51f5053e78404be0b5b2cd40a92a7f6ac2690542
+          path: interface-pr9
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: d2d2df0e4ad88f1cda885e3eb1394151515e7946
+          path: interface-core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify exact current non-finite and authority boundaries
+        working-directory: verification
+        run: node --test test/current-nonfinite-boundaries-conformance.test.js
+        env:
+          CURRENT_NONFINITE_CORE_PATH: ${{ github.workspace }}/core-pr14/core/morphtile.js
+          CURRENT_NONFINITE_CORE_COMMIT: 8ca51aedbc7c82cdd5969aa44490912609227405
+          CURRENT_NONFINITE_SURFACE_ROOT: ${{ github.workspace }}/surface-pr14
+          CURRENT_NONFINITE_SURFACE_COMMIT: c2c4d0a6e77945c0828abd76d4805049c4bde982
+          CURRENT_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr9
+          CURRENT_INTERFACE_COMMIT: 51f5053e78404be0b5b2cd40a92a7f6ac2690542
+          CURRENT_INTERFACE_CORE_PATH: ${{ github.workspace }}/interface-core/core/morphtile.js
+          CURRENT_INTERFACE_CORE_COMMIT: d2d2df0e4ad88f1cda885e3eb1394151515e7946
