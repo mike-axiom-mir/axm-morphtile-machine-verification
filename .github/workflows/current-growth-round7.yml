@@ -1,0 +1,58 @@
+name: current growth round 7
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round7:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 43a9eccf831a49aedc169a5ce0b6701e22ae4cc3
+          path: core-pr16
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 63a65c70bb702cb9ac979ec04233ffaa7ed5d179
+          path: core-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 9ea5205381ad570fe23cf518886ef2f233c0b626
+          path: surface-pr17
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: fc1cb264235e0a5df02e07618dffbec6dc509a7b
+          path: form-pr19
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 246f36d270c2b82f0ea89817f054bd1701ce9eeb
+          path: interface-pr14
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 7 boundaries
+        working-directory: verification
+        run: node --test test/current-growth-round7.test.js
+        env:
+          R7_CORE_PR16_PATH: ${{ github.workspace }}/core-pr16/core/morphtile.js
+          R7_CORE_PR16_COMMIT: 43a9eccf831a49aedc169a5ce0b6701e22ae4cc3
+          R7_CORE_MAIN_PATH: ${{ github.workspace }}/core-main/core/morphtile.js
+          R7_CORE_MAIN_COMMIT: 63a65c70bb702cb9ac979ec04233ffaa7ed5d179
+          R7_SURFACE_ROOT: ${{ github.workspace }}/surface-pr17
+          R7_SURFACE_COMMIT: 9ea5205381ad570fe23cf518886ef2f233c0b626
+          R7_FORM_ROOT: ${{ github.workspace }}/form-pr19
+          R7_FORM_COMMIT: fc1cb264235e0a5df02e07618dffbec6dc509a7b
+          R7_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr14
+          R7_INTERFACE_COMMIT: 246f36d270c2b82f0ea89817f054bd1701ce9eeb
