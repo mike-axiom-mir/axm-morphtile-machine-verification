@@ -13,7 +13,7 @@ function loadSurface() {
   return require(path.join(SURFACE_REPO_PATH, "src"));
 }
 
-test("pinned Surface v0.3 candidate exposes non-number base_color coercion as FAIL/HOLD evidence", () => {
+test("pinned Surface v0.3 candidate exposes numeric type coercion as independent FAIL/HOLD evidence", () => {
   const surface = loadSurface();
   const result = verifySurfaceIntentBoundary(surface, { expectedVersion: "0.3.0" });
 
@@ -24,19 +24,24 @@ test("pinned Surface v0.3 candidate exposes non-number base_color coercion as FA
     "unknown-top-level-field-fail-closed",
     "paint-vars-strict-number-type",
     "base-color-strict-number-type",
-    "base-color-range"
+    "base-color-range",
+    "surface-rule-strict-number-types"
   ]);
 
-  const coercionErrors = result.errors.filter((error) => error.code === "BASE_COLOR_TYPE_COERCION");
-  assert.equal(coercionErrors.length, 3);
-  assert.deepEqual(coercionErrors.map((error) => error.case), ["string", "boolean", "null"]);
+  const colorErrors = result.errors.filter((error) => error.code === "BASE_COLOR_TYPE_COERCION");
+  assert.equal(colorErrors.length, 3);
+  assert.deepEqual(colorErrors.map((error) => error.case), ["string", "boolean", "null"]);
+
+  const ruleErrors = result.errors.filter((error) => error.code === "SURFACE_RULE_TYPE_COERCION");
+  assert.equal(ruleErrors.length, 2);
+  assert.deepEqual(ruleErrors.map((error) => error.case), ["threshold-string", "match-color-null"]);
 
   assert.deepEqual(result.receipt.base_color_type_cases, [
     {
       id: "string",
       input: ["0.2", 0.25, 0.3],
       status: "CANDIDATE",
-      code: null,
+      hold_code: null,
       emitted_color: [0.2, 0.25, 0.3],
       mutated: false
     },
@@ -44,7 +49,7 @@ test("pinned Surface v0.3 candidate exposes non-number base_color coercion as FA
       id: "boolean",
       input: [false, 0.25, 0.3],
       status: "CANDIDATE",
-      code: null,
+      hold_code: null,
       emitted_color: [0, 0.25, 0.3],
       mutated: false
     },
@@ -52,8 +57,37 @@ test("pinned Surface v0.3 candidate exposes non-number base_color coercion as FA
       id: "null",
       input: [null, 0.25, 0.3],
       status: "CANDIDATE",
-      code: null,
+      hold_code: null,
       emitted_color: [0, 0.25, 0.3],
+      mutated: false
+    }
+  ]);
+
+  assert.deepEqual(result.receipt.surface_rule_type_cases, [
+    {
+      id: "threshold-string",
+      status: "CANDIDATE",
+      hold_code: null,
+      normalized_rule: {
+        kind: "facing",
+        direction: "up",
+        threshold: 0.6,
+        match_color: [0.9, 0.8, 0.7],
+        else_color: [0.1, 0.2, 0.3]
+      },
+      mutated: false
+    },
+    {
+      id: "match-color-null",
+      status: "CANDIDATE",
+      hold_code: null,
+      normalized_rule: {
+        kind: "facing",
+        direction: "up",
+        threshold: 0.6,
+        match_color: [0, 0.8, 0.7],
+        else_color: [0.1, 0.2, 0.3]
+      },
       mutated: false
     }
   ]);
