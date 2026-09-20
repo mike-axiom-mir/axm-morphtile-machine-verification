@@ -1,0 +1,47 @@
+name: form-assembly-closure-conformance
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: e0da57037a2efd736ee465ead2c1d73d4fbf24cc
+          path: .runtime/form-v08
+          sparse-checkout: |
+            src
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: b78ae4175331da8f72fc5135b282ee06940be5ec
+          path: .runtime/assembly-v06
+          sparse-checkout: |
+            src
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-v04
+          sparse-checkout: |
+            core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Form v0.8 to Assembly recursive closure conformance
+        run: node --test test/form-assembly-closure-conformance.test.js
+        env:
+          FORM_V08_REPO_PATH: ${{ github.workspace }}/.runtime/form-v08
+          FORM_V08_COMMIT: e0da57037a2efd736ee465ead2c1d73d4fbf24cc
+          ASSEMBLY_V06_REPO_PATH: ${{ github.workspace }}/.runtime/assembly-v06
+          ASSEMBLY_V06_COMMIT: b78ae4175331da8f72fc5135b282ee06940be5ec
+          MORPHTILE_V04_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-v04/core/morphtile.js
+          MORPHTILE_V04_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
