@@ -1,0 +1,51 @@
+name: source integrity round 2
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source-integrity-round2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: d078591b1e73f92b2b21dd7c35daf30822eb65e6
+          path: surface-pr15-repaired
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: b698c8ebdecfcee7da1d0d245004bbdd595e4ee9
+          path: form-pr16
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 807153339658d66f724feaece542a3802b08f82f
+          path: assembly-pr19
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 429a344f7d9333bef01cf9de1c292c3af09abec2
+          path: core-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify repaired and current source-integrity boundaries
+        working-directory: verification
+        run: node --test test/source-integrity-round2.test.js
+        env:
+          SOURCE_R2_SURFACE_ROOT: ${{ github.workspace }}/surface-pr15-repaired
+          SOURCE_R2_SURFACE_COMMIT: d078591b1e73f92b2b21dd7c35daf30822eb65e6
+          SOURCE_R2_FORM_ROOT: ${{ github.workspace }}/form-pr16
+          SOURCE_R2_FORM_COMMIT: b698c8ebdecfcee7da1d0d245004bbdd595e4ee9
+          SOURCE_R2_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr19
+          SOURCE_R2_ASSEMBLY_COMMIT: 807153339658d66f724feaece542a3802b08f82f
+          SOURCE_R2_CORE_PATH: ${{ github.workspace }}/core-current/core/morphtile.js
+          SOURCE_R2_CORE_COMMIT: 429a344f7d9333bef01cf9de1c292c3af09abec2
