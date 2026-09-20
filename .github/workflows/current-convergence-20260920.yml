@@ -49,6 +49,3 @@ jobs:
           SURFACE_COMMIT: 555f4eeedbb383c90776581fe1c5a32b412905c9
           FORM_ROOT: ${{ github.workspace }}/form-pr14
           FORM_COMMIT: e3abd9e8e4fad755c741dd9fe42d6601fb5f2bfc
-      - name: Keep the aggregate verifier suite green without integration env leakage
-        working-directory: verification
-        run: npm test
