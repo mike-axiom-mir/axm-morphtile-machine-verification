@@ -1,0 +1,58 @@
+name: current growth round 5
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round5:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: dfc6b0a491a2a22d31738cc3d2e0e49d3b0c362f
+          path: surface-pr16
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 05697081bbfe4443cdb5bfa6a93afdebf5c49bb6
+          path: form-pr18
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 93f0c7161e8a3e3e58a067c4c227110fd5a294e6
+          path: interface-pr13
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: fb5c93153b7c3e9a364fa0b55f5a2d8d1fffb58d
+          path: assembly-pr20
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 429a344f7d9333bef01cf9de1c292c3af09abec2
+          path: core-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current producer growth boundaries
+        working-directory: verification
+        run: node --test test/current-growth-round5.test.js
+        env:
+          GROWTH_R5_SURFACE_ROOT: ${{ github.workspace }}/surface-pr16
+          GROWTH_R5_SURFACE_COMMIT: dfc6b0a491a2a22d31738cc3d2e0e49d3b0c362f
+          GROWTH_R5_FORM_ROOT: ${{ github.workspace }}/form-pr18
+          GROWTH_R5_FORM_COMMIT: 05697081bbfe4443cdb5bfa6a93afdebf5c49bb6
+          GROWTH_R5_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr13
+          GROWTH_R5_INTERFACE_COMMIT: 93f0c7161e8a3e3e58a067c4c227110fd5a294e6
+          GROWTH_R5_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr20
+          GROWTH_R5_ASSEMBLY_COMMIT: fb5c93153b7c3e9a364fa0b55f5a2d8d1fffb58d
+          GROWTH_R5_CORE_PATH: ${{ github.workspace }}/core-current/core/morphtile.js
+          GROWTH_R5_CORE_COMMIT: 429a344f7d9333bef01cf9de1c292c3af09abec2
