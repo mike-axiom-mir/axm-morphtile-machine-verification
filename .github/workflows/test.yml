@@ -71,7 +71,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm test
+      - name: Target Surface re-verification
+        run: node --test test/surface-intent-conformance.test.js
+        env:
+          SURFACE_REPO_PATH: ${{ github.workspace }}/.runtime/surface
+          SURFACE_COMMIT: 35e4c9f464f13d6778f1f82d340e5cd63c86ee7a
+      - name: Target Capability wake re-verification
+        run: node --test test/capability-wake-conformance.test.js
+        env:
+          CAPABILITY_WAKE_REPO_PATH: ${{ github.workspace }}/.runtime/capability-wakes
+          CAPABILITY_WAKE_COMMIT: 795ac57694d69128d4a077de4ee1750f98ea277b
+          MORPHTILE_CURRENT_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-current/core/morphtile.js
+          MORPHTILE_CURRENT_COMMIT: b6b086edb70fd4657495fcf01cb9fcdedceafdaf
+      - name: Full Verification suite
+        run: npm test
         env:
           MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-hash/core/morphtile.js
           MORPHTILE_COMMIT: 4346df01ed18cd1336064f9323d7766ff4f6338a
