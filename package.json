@@ -1,1 +1,1 @@
-{"name":"@axm/morphtile-machine-verification","version":"0.1.0","private":false,"type":"commonjs","scripts":{"test":"node --test"},"engines":{"node":">=18"},"license":"LicenseRef-PolyForm-Noncommercial-1.0.0"}
+{"name":"@axm/morphtile-machine-verification","version":"0.1.0","private":false,"type":"commonjs","scripts":{"test":"node --test test/*.test.js"},"engines":{"node":">=18"},"license":"LicenseRef-PolyForm-Noncommercial-1.0.0"}
