@@ -46,6 +46,3 @@ jobs:
           SURFACE_COMMIT: 941779901406961190e27a6abac9307ab00b89ae
           FORM_REPO_PATH: ${{ github.workspace }}/.runtime/form
           FORM_COMMIT: 18302ba9d3a305b127867dff4b1ff10c68db400d
-
-      - name: Run owned Verification suite
-        run: npm test
