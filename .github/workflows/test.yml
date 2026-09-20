@@ -42,6 +42,9 @@ jobs:
           repository: mike-axiom-mir/axm-morphtile-machine-surface
           ref: 8d6a561a214ae39c77d5552bd29822a58829b9c8
           path: .runtime/surface
+          sparse-checkout: |
+            src
+            machine.json
       - uses: actions/setup-node@v4
         with:
           node-version: 20
