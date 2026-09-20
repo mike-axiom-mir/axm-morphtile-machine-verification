@@ -19,12 +19,16 @@ const env = {
 };
 const ready = Object.values(env).every(Boolean);
 
+function machineEntry(repoPath) {
+  return require(path.join(path.resolve(repoPath), "src"));
+}
+
 test("independently verifies current Surface + Capability semantics through Assembly, kit hash, import and targeted tamper rejection", { skip: !ready }, () => {
-  const assembly = require(path.resolve(env.assembly));
+  const assembly = machineEntry(env.assembly);
   const { materializeKit } = require(path.join(path.resolve(env.assembly), "src", "kit"));
-  const form = require(path.resolve(env.form));
-  const surface = require(path.resolve(env.surface));
-  const capability = require(path.resolve(env.capability));
+  const form = machineEntry(env.form);
+  const surface = machineEntry(env.surface);
+  const capability = machineEntry(env.capability);
   const runtime = require(path.resolve(env.core));
 
   const result = verifyAssemblyCurrentRetention({
