@@ -35,11 +35,16 @@ function verifySurfaceRenderEvidenceProvenance(renderTool, MorphTile, options = 
     return { status: "FAIL", checked, errors: [failure("VERIFICATION_REVISION_PIN_MISSING", "Exact Surface and MorphTile commits are required for provenance verification.")], receipt: null };
   }
 
+  const expectedProducer = {
+    repository: "mike-axiom-mir/axm-morphtile-machine-surface",
+    commit: surfaceCommit
+  };
+
   let first;
   let second;
   try {
-    first = renderTool.buildEvidence(MorphTile, morphTileCommit);
-    second = renderTool.buildEvidence(MorphTile, morphTileCommit);
+    first = renderTool.buildEvidence(MorphTile, morphTileCommit, expectedProducer);
+    second = renderTool.buildEvidence(MorphTile, morphTileCommit, expectedProducer);
   } catch (error) {
     return {
       status: "FAIL",
@@ -78,9 +83,9 @@ function verifySurfaceRenderEvidenceProvenance(renderTool, MorphTile, options = 
   checked.push("runtime-revision-provenance");
 
   const producer = first && first.producer;
-  if (!producer || producer.repository !== "mike-axiom-mir/axm-morphtile-machine-surface" || producer.commit !== surfaceCommit) {
+  if (!producer || producer.repository !== expectedProducer.repository || producer.commit !== surfaceCommit) {
     errors.push(failure("SURFACE_RENDER_PRODUCER_REVISION_MISSING", "Pixel identity is not source provenance: the portable render receipt must identify the exact Surface producer revision that generated it.", {
-      expected_repository: "mike-axiom-mir/axm-morphtile-machine-surface",
+      expected_repository: expectedProducer.repository,
       expected_commit: surfaceCommit,
       observed_producer: producer || null
     }));
@@ -89,7 +94,7 @@ function verifySurfaceRenderEvidenceProvenance(renderTool, MorphTile, options = 
 
   let baselineStatus = null;
   try {
-    const baseline = renderTool.verifyBaseline(first);
+    const baseline = renderTool.verifyBaseline(first, undefined, expectedProducer);
     baselineStatus = baseline && baseline.status || null;
     if (baselineStatus !== "PASS") {
       errors.push(failure("SURFACE_RENDER_BASELINE_NOT_PASS", "Producer baseline checker did not PASS its own exact technical evidence.", { observed_status: baselineStatus }));
@@ -99,16 +104,35 @@ function verifySurfaceRenderEvidenceProvenance(renderTool, MorphTile, options = 
   }
   checked.push("producer-pixel-baseline");
 
+  let mismatchRejected = null;
+  if (producer && producer.repository === expectedProducer.repository && producer.commit === surfaceCommit) {
+    const wrongProducer = {
+      repository: expectedProducer.repository,
+      commit: surfaceCommit === "0000000000000000000000000000000000000000"
+        ? "1111111111111111111111111111111111111111"
+        : "0000000000000000000000000000000000000000"
+    };
+    try {
+      renderTool.verifyBaseline(first, undefined, wrongProducer);
+      mismatchRejected = false;
+      errors.push(failure("SURFACE_RENDER_PRODUCER_MISMATCH_ACCEPTED", "Baseline verification accepted evidence under a different independently supplied producer revision."));
+    } catch (_error) {
+      mismatchRejected = true;
+    }
+    checked.push("independent-producer-mismatch-rejection");
+  }
+
   return {
     status: errors.length ? "FAIL" : "PASS",
     checked,
     errors,
     receipt: {
-      schema: "axm.morphtile.surface-render-provenance-conformance/v0.1",
+      schema: "axm.morphtile.surface-render-provenance-conformance/v0.2",
       surface_commit: surfaceCommit,
       morphtile_commit: morphTileCommit,
       producer_identity: producer || null,
       baseline_status: baselineStatus,
+      mismatched_expected_producer_rejected: mismatchRejected,
       cases: firstCases,
       visual_quality: first && first.visual_quality || null
     }
@@ -139,15 +163,7 @@ function firstHoldCode(result) {
   return result && Array.isArray(result.holds) && result.holds[0] ? result.holds[0].code || null : null;
 }
 
-function verifyFormRepeatFiniteProgression(formMachine, options = {}) {
-  const formCommit = options.formCommit || null;
-  const errors = [];
-  const checked = [];
-  if (!formMachine || typeof formMachine.run !== "function") {
-    return { status: "FAIL", checked, errors: [failure("FORM_MACHINE_CONTRACT_MISSING", "Form verification requires machine.run().")], receipt: null };
-  }
-
-  const request = makeFiniteOverflowRequest();
+function runFailClosedProbe(formMachine, request, expectedCode, acceptedFailureCode) {
   const before = JSON.stringify(request);
   let output = null;
   let threw = null;
@@ -157,10 +173,28 @@ function verifyFormRepeatFiniteProgression(formMachine, options = {}) {
     threw = { name: error && error.name || "Error", message: error && error.message || String(error) };
   }
   const mutated = JSON.stringify(request) !== before;
-  if (mutated) errors.push(failure("FORM_REPEAT_OVERFLOW_REQUEST_MUTATED", "Form Machine mutated the adversarial repeat-setting request."));
-  if (threw) errors.push(failure("FORM_REPEAT_OVERFLOW_THREW", "Form Machine threw instead of returning a fail-closed result.", { observed_error: threw }));
-  checked.push("request-immutability-and-no-throw");
+  const observedStatus = output && output.status || null;
+  const observedCode = firstHoldCode(output);
+  const errors = [];
+  if (mutated) errors.push(failure(`${acceptedFailureCode}_REQUEST_MUTATED`, "Form Machine mutated an adversarial finite-domain request."));
+  if (threw) errors.push(failure(`${acceptedFailureCode}_THREW`, "Form Machine threw instead of returning a fail-closed result.", { observed_error: threw }));
+  if (observedStatus !== "HOLD") {
+    errors.push(failure(acceptedFailureCode, "Form accepted finite authored inputs whose known bounded generated domain contains a non-finite value.", { observed_status: observedStatus, observed_code: observedCode }));
+  } else if (observedCode !== expectedCode) {
+    errors.push(failure(`${acceptedFailureCode}_HOLD_IDENTITY_DRIFT`, "Form held the non-finite generated domain under an unexpected boundary.", { expected_code: expectedCode, observed_code: observedCode }));
+  }
+  return { errors, observedStatus, observedCode, mutated };
+}
 
+function verifyFormRepeatFiniteProgression(formMachine, options = {}) {
+  const formCommit = options.formCommit || null;
+  const errors = [];
+  const checked = [];
+  if (!formMachine || typeof formMachine.run !== "function") {
+    return { status: "FAIL", checked, errors: [failure("FORM_MACHINE_CONTRACT_MISSING", "Form verification requires machine.run().")], receipt: null };
+  }
+
+  const request = makeFiniteOverflowRequest();
   const base = Number.MAX_VALUE;
   const delta = Number.MAX_VALUE;
   const finalValue = base + delta;
@@ -169,33 +203,20 @@ function verifyFormRepeatFiniteProgression(formMachine, options = {}) {
   }
   checked.push("known-nonfinite-expansion-probe");
 
-  const observedStatus = output && output.status || null;
-  const observedCode = firstHoldCode(output);
-  if (observedStatus !== "HOLD") {
-    errors.push(failure("FORM_REPEAT_PROGRESSION_NONFINITE_EXPANSION_ACCEPTED", "Form accepted individually finite base/delta values even though the known bounded repeat expands them to Infinity at i=1.", {
-      form_commit: formCommit,
-      observed_status: observedStatus,
-      observed_code: observedCode,
-      base,
-      delta,
-      count: 2,
-      expanded_i1: String(finalValue)
-    }));
-  } else if (observedCode !== "HOLD_FORM_REPEAT_INVALID") {
-    errors.push(failure("FORM_REPEAT_OVERFLOW_HOLD_IDENTITY_DRIFT", "Form held the non-finite progression, but not under the repeat-invalid boundary.", { observed_code: observedCode }));
-  }
-  checked.push("finite-expanded-domain-fail-closed");
+  const probe = runFailClosedProbe(formMachine, request, "HOLD_FORM_REPEAT_INVALID", "FORM_REPEAT_PROGRESSION_NONFINITE_EXPANSION_ACCEPTED");
+  errors.push(...probe.errors);
+  checked.push("request-immutability-and-no-throw", "finite-expanded-domain-fail-closed");
 
   return {
     status: errors.length ? "FAIL" : "PASS",
     checked,
     errors,
     receipt: {
-      schema: "axm.morphtile.form-repeat-finite-progression-conformance/v0.1",
+      schema: "axm.morphtile.form-repeat-finite-progression-conformance/v0.2",
       form_commit: formCommit,
-      observed_status: observedStatus,
-      observed_code: observedCode,
-      request_mutated: mutated,
+      observed_status: probe.observedStatus,
+      observed_code: probe.observedCode,
+      request_mutated: probe.mutated,
       base,
       delta,
       count: 2,
@@ -204,8 +225,95 @@ function verifyFormRepeatFiniteProgression(formMachine, options = {}) {
   };
 }
 
+function verifyFormGeneratedPositionClosure(formMachine, options = {}) {
+  const formCommit = options.formCommit || null;
+  const errors = [];
+  const checked = [];
+  if (!formMachine || typeof formMachine.run !== "function") {
+    return { status: "FAIL", checked, errors: [failure("FORM_MACHINE_CONTRACT_MISSING", "Form verification requires machine.run().")], receipt: null };
+  }
+
+  const common = {
+    envelope_version: "0.1",
+    goal: "Verify machine-generated bounded positions remain finite",
+    provenance: { caller: "axm.morphtile.machine.verification" }
+  };
+  const repeatRequest = {
+    ...common,
+    request_id: "verification-repeat-position-finite-expansion",
+    intent: {
+      repeat: {
+        count: 2,
+        step: [Number.MAX_VALUE, 0, 0],
+        part: { shape: "box", size: [1, 1, 1], pos: [Number.MAX_VALUE, 0, 0] }
+      }
+    }
+  };
+  const gridRequest = {
+    ...common,
+    request_id: "verification-grid-position-finite-expansion",
+    intent: {
+      grid: {
+        counts: [2, 1, 1],
+        step: [Number.MAX_VALUE, 0, 0],
+        part: { shape: "box", size: [1, 1, 1], pos: [Number.MAX_VALUE, 0, 0] }
+      }
+    }
+  };
+  const controlRequest = {
+    ...common,
+    request_id: "verification-repeat-position-large-finite-control",
+    intent: {
+      repeat: {
+        count: 2,
+        step: [Number.MAX_VALUE / 4, 0, 0],
+        part: { shape: "box", size: [1, 1, 1], pos: [Number.MAX_VALUE / 4, 0, 0] }
+      }
+    }
+  };
+
+  const repeat = runFailClosedProbe(formMachine, repeatRequest, "HOLD_FORM_REPEAT_INVALID", "FORM_REPEAT_POSITION_NONFINITE_EXPANSION_ACCEPTED");
+  const grid = runFailClosedProbe(formMachine, gridRequest, "HOLD_FORM_GRID_INVALID", "FORM_GRID_POSITION_NONFINITE_EXPANSION_ACCEPTED");
+  errors.push(...repeat.errors, ...grid.errors);
+  checked.push("repeat-generated-position-finite-domain", "grid-generated-position-finite-domain");
+
+  const beforeControl = JSON.stringify(controlRequest);
+  let controlOutput = null;
+  let controlThrew = null;
+  try {
+    controlOutput = formMachine.run(controlRequest);
+  } catch (error) {
+    controlThrew = error && error.message || String(error);
+  }
+  const controlMutated = JSON.stringify(controlRequest) !== beforeControl;
+  if (controlThrew) errors.push(failure("FORM_LARGE_FINITE_CONTROL_THREW", "Large but finite control request threw unexpectedly.", { observed_error: controlThrew }));
+  if (controlMutated) errors.push(failure("FORM_LARGE_FINITE_CONTROL_MUTATED", "Large but finite control request was mutated."));
+  if (!controlOutput || controlOutput.status !== "CANDIDATE") {
+    errors.push(failure("FORM_LARGE_FINITE_CONTROL_REJECTED", "Finite-domain guard overreached and rejected a large but still finite bounded progression.", { observed_status: controlOutput && controlOutput.status || null, observed_code: firstHoldCode(controlOutput) }));
+  }
+  checked.push("large-finite-control-remains-accepted");
+
+  return {
+    status: errors.length ? "FAIL" : "PASS",
+    checked,
+    errors,
+    receipt: {
+      schema: "axm.morphtile.form-generated-position-finite-closure/v0.1",
+      form_commit: formCommit,
+      repeat: { status: repeat.observedStatus, code: repeat.observedCode, request_mutated: repeat.mutated },
+      grid: { status: grid.observedStatus, code: grid.observedCode, request_mutated: grid.mutated },
+      finite_control: {
+        status: controlOutput && controlOutput.status || null,
+        code: firstHoldCode(controlOutput),
+        request_mutated: controlMutated
+      }
+    }
+  };
+}
+
 module.exports = {
   verifySurfaceRenderEvidenceProvenance,
   verifyFormRepeatFiniteProgression,
+  verifyFormGeneratedPositionClosure,
   makeFiniteOverflowRequest
 };
