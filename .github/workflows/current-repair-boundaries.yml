@@ -1,0 +1,54 @@
+name: current-repair-boundaries
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-repair-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: bf9db61993acb089b7d46b76135b9c4ae93392db
+          path: .runtime/surface-gradient-repair
+          sparse-checkout: |
+            src
+            machine.json
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 92cee3a9cbe823bcd2ca6a587f8b116c13e0ba99
+          path: .runtime/interface-nested-path
+          sparse-checkout: |
+            src
+            machine.json
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ef2b3c6986aa1a333247feffc43a8443f17239d0
+          path: .runtime/morphtile-current-repair
+          sparse-checkout: |
+            core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Re-run original Surface mixed-gradient adversarial receipt against v0.5.1
+        run: node --test test/surface-gradient-repair-conformance.test.js
+        env:
+          SURFACE_GRADIENT_REPAIR_REPO_PATH: ${{ github.workspace }}/.runtime/surface-gradient-repair
+          SURFACE_GRADIENT_REPAIR_COMMIT: bf9db61993acb089b7d46b76135b9c4ae93392db
+          SURFACE_GRADIENT_REPAIR_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-current-repair/core/morphtile.js
+          SURFACE_GRADIENT_REPAIR_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
+      - name: Independently verify Interface nested paths through real MorphTile runtime
+        run: node --test test/interface-nested-path-conformance.test.js
+        env:
+          INTERFACE_NESTED_PATH_REPO_PATH: ${{ github.workspace }}/.runtime/interface-nested-path
+          INTERFACE_NESTED_PATH_COMMIT: 92cee3a9cbe823bcd2ca6a587f8b116c13e0ba99
+          INTERFACE_NESTED_PATH_MORPHTILE_CORE_PATH: ${{ github.workspace }}/.runtime/morphtile-current-repair/core/morphtile.js
+          INTERFACE_NESTED_PATH_MORPHTILE_COMMIT: ef2b3c6986aa1a333247feffc43a8443f17239d0
