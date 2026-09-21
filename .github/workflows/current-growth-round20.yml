@@ -59,7 +59,7 @@ jobs:
           node-version: 22
       - name: Verify current round 20 boundaries
         working-directory: verification
-        run: set -o pipefail; node --test test/current-growth-round20.test.js 2>&1 | tee round20.log
+        run: set -o pipefail; node --test test/current-growth-round20-corrected.test.js 2>&1 | tee round20.log
         env:
           R20_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
           R20_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
