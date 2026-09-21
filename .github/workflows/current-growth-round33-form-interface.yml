@@ -1,0 +1,109 @@
+name: current growth round 33 form interface
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round33-form-interface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 969d802b4150d0b8f1e819bed1e8d13225fb273c
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 5e4499f37c7b47dddfcd9e01f26141e9b50240a3
+          path: form-pr41
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 2cff4674c4cfb5de97bf842a6d307f3585268ab1
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: d837c0a71a79120e54a2c581894b5e8e80accb67
+          path: interface-pr33
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 4996d524e05ff50a7305c2ebce81b81954f4ac05
+          path: assembly-preclosure
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 8a2a7bf6adf40266438945ad1482001be9d68900
+          path: assembly-current
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Form 41 and Interface 33 candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round33-form-interface.test.js 2>&1 | tee round33-form-interface.log
+        env:
+          R33_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R33_FORM_BASE_COMMIT: 969d802b4150d0b8f1e819bed1e8d13225fb273c
+          R33_FORM41_ROOT: ${{ github.workspace }}/form-pr41
+          R33_FORM41_COMMIT: 5e4499f37c7b47dddfcd9e01f26141e9b50240a3
+          R33_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R33_INTERFACE_BASE_COMMIT: 2cff4674c4cfb5de97bf842a6d307f3585268ab1
+          R33_INTERFACE33_ROOT: ${{ github.workspace }}/interface-pr33
+          R33_INTERFACE33_COMMIT: d837c0a71a79120e54a2c581894b5e8e80accb67
+          R33_ASSEMBLY_CURRENT_COMMIT: 8a2a7bf6adf40266438945ad1482001be9d68900
+          R33_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R33_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Confirm pre-closure Assembly cannot satisfy Interface closure proof
+        working-directory: interface-pr33
+        run: |
+          set +e
+          node --test test/assembly-dependency.integration.test.js > ../verification/round33-interface-preclosure.log 2>&1
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then
+            echo "pre-closure Assembly unexpectedly satisfied the closure-bearing Interface receiver suite"
+            cat ../verification/round33-interface-preclosure.log
+            exit 1
+          fi
+          echo "pre-closure receiver correctly fails the closure-bearing suite"
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-preclosure/src
+          MORPHTILE_ASSEMBLY_COMMIT: 4996d524e05ff50a7305c2ebce81b81954f4ac05
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Independently replay Interface suite against current Assembly closure receiver
+        working-directory: interface-pr33
+        run: node --test test/assembly-dependency.integration.test.js
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-current/src
+          MORPHTILE_ASSEMBLY_COMMIT: 8a2a7bf6adf40266438945ad1482001be9d68900
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 33 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round33-form-interface-logs
+          path: |
+            verification/round33-form-interface.log
+            verification/round33-interface-preclosure.log
+          if-no-files-found: error
