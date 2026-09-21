@@ -1,0 +1,63 @@
+name: current-growth-round41-form47-size-state
+
+on:
+  push:
+    branches:
+      - verification/round41-form47-size-state
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-form47:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+
+      - name: Checkout Form integrated predecessor
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          path: form-base
+
+      - name: Checkout Form 47 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: fbc3d990f4c5ec1698b69d41801f567bd3efaa27
+          path: form47
+
+      - name: Checkout pinned MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Independent exact-head attack
+        working-directory: verification
+        env:
+          R41_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R41_FORM_BASE_COMMIT: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          R41_FORM47_ROOT: ${{ github.workspace }}/form47
+          R41_FORM47_COMMIT: fbc3d990f4c5ec1698b69d41801f567bd3efaa27
+          R41_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R41_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-growth-round41-form47-size-state.test.js
+
+      - name: Replay Form candidate full producer suite independently
+        working-directory: form47
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
