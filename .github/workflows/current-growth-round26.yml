@@ -1,0 +1,73 @@
+name: current growth round 26
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round26:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: b5d88226f9e3482825d0e26984da630d1780a5ea
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: f78355d9212cc15abb4535edfdd370225ffaaee5
+          path: interface-pr30
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
+          path: assembly
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Interface PR 30 exact Assembly presentation boundary
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round26.test.js 2>&1 | tee round26.log
+        env:
+          R26_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R26_INTERFACE_BASE_COMMIT: b5d88226f9e3482825d0e26984da630d1780a5ea
+          R26_INTERFACE30_ROOT: ${{ github.workspace }}/interface-pr30
+          R26_INTERFACE30_COMMIT: f78355d9212cc15abb4535edfdd370225ffaaee5
+          R26_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly
+          R26_ASSEMBLY_COMMIT: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Replay exact Interface receiver suite standalone
+        working-directory: interface-pr30
+        run: |
+          set -o pipefail
+          node --test test/assembly-dependency.integration.test.js 2>&1 | tee ../verification/round26-interface-receiver.log
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 26 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round26-logs
+          path: |
+            verification/round26.log
+            verification/round26-interface-receiver.log
+          if-no-files-found: error
