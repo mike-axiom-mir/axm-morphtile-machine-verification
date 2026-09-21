@@ -1,0 +1,53 @@
+name: current growth round 25
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round25:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 82a65a965013654a5929596013ecbf3467f4d5ae
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 411633f1a34f4045edfbcd474d0ddc947f7c4064
+          path: form-pr37
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Form PR 37 exact repeat-kernel boundary
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round25.test.js 2>&1 | tee round25.log
+        env:
+          R25_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R25_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R25_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R25_FORM_BASE_COMMIT: 82a65a965013654a5929596013ecbf3467f4d5ae
+          R25_FORM37_ROOT: ${{ github.workspace }}/form-pr37
+          R25_FORM37_COMMIT: 411633f1a34f4045edfbcd474d0ddc947f7c4064
+      - name: Preserve round 25 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round25-log
+          path: verification/round25.log
+          if-no-files-found: error
