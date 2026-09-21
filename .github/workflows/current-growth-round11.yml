@@ -1,0 +1,79 @@
+name: current growth round 11
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round11:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: d3d6e459569dd29463afa6fd61f0b6b5cd3afef3
+          path: form-pr23
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 3e43c003a0dc54f7ae877767fd2c3dff9daaa39d
+          path: surface-pr21
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 3ed535f9b90c29d4c9e3f5f5559db274b95e8f01
+          path: interface-pr18
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 99577f2851cf5a7146871a49cc208d582aa3cb98
+          path: assembly-pr25
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4349ba0d926aee1d36dde86fc7f69d04a58bf924
+          path: surface-merged
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 1a941f8ff88ca590952571e3eeeeeeef6daefd77
+          path: interface-merged
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 11 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round11.test.js 2>&1 | tee round11.log
+        env:
+          R11_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R11_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R11_FORM_ROOT: ${{ github.workspace }}/form-pr23
+          R11_FORM_COMMIT: d3d6e459569dd29463afa6fd61f0b6b5cd3afef3
+          R11_SURFACE_ROOT: ${{ github.workspace }}/surface-pr21
+          R11_SURFACE_COMMIT: 3e43c003a0dc54f7ae877767fd2c3dff9daaa39d
+          R11_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr18
+          R11_INTERFACE_COMMIT: 3ed535f9b90c29d4c9e3f5f5559db274b95e8f01
+          R11_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr25
+          R11_ASSEMBLY_COMMIT: 99577f2851cf5a7146871a49cc208d582aa3cb98
+          R11_MERGED_SURFACE_ROOT: ${{ github.workspace }}/surface-merged
+          R11_MERGED_SURFACE_COMMIT: 4349ba0d926aee1d36dde86fc7f69d04a58bf924
+          R11_MERGED_INTERFACE_ROOT: ${{ github.workspace }}/interface-merged
+          R11_MERGED_INTERFACE_COMMIT: 1a941f8ff88ca590952571e3eeeeeeef6daefd77
+      - name: Preserve round 11 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round11-log
+          path: verification/round11.log
+          if-no-files-found: error
