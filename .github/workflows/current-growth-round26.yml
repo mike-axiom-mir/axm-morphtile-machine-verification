@@ -29,6 +29,11 @@ jobs:
           repository: mike-axiom-mir/axm-morphtile-machine-assembly
           ref: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
           path: assembly
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -44,10 +49,25 @@ jobs:
           R26_INTERFACE30_COMMIT: f78355d9212cc15abb4535edfdd370225ffaaee5
           R26_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly
           R26_ASSEMBLY_COMMIT: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
-      - name: Preserve round 26 log
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Replay exact Interface receiver suite standalone
+        working-directory: interface-pr30
+        run: |
+          set -o pipefail
+          node --test test/assembly-dependency.integration.test.js 2>&1 | tee ../verification/round26-interface-receiver.log
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 26 logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: current-growth-round26-log
-          path: verification/round26.log
+          name: current-growth-round26-logs
+          path: |
+            verification/round26.log
+            verification/round26-interface-receiver.log
           if-no-files-found: error
