@@ -115,7 +115,7 @@ test("Interface PR #27 corrected: placement presence, receiver-owned render defa
   assert.equal(MT.hashOf(ws.live), canonicalHash, "resolution must be structurally read-only");
 
   const panel = MT.compilePanel(ws.live);
-  const tower = findVNode(panel.vnode || panel, (node) => node.tile === "mt_tower" && typeof node.cls === "string" && node.cls.includes("mt-p-docked"));
+  const tower = findVNode(panel.root || panel.vnode || panel, (node) => node.tile === "mt_tower" && typeof node.cls === "string" && node.cls.includes("mt-p-docked"));
   assert.ok(tower, "real core panel must render mt_tower in docked presentation mode");
   const tag = findVNode(tower, (node) => typeof node.cls === "string" && node.cls.includes("mt-presentation-tag"));
   assert.ok(tag, "real core panel must expose its presentation tag");
@@ -144,7 +144,10 @@ test("Interface PR #27 corrected: placement presence, receiver-owned render defa
       "render-read-only",
       "exact-rollback"
     ],
-    historical_verifier_failure: "run 35578932341 incorrectly expected resolvePresentation to materialize dock=right; core actually applies that default only while rendering",
+    historical_verifier_failures: [
+      "run 35578932341 incorrectly expected resolvePresentation to materialize dock=right; core applies that default only while rendering",
+      "run 35580187236 traversed the compilePanel wrapper instead of its root vnode"
+    ],
     visual_quality: "NOT_TESTED",
     placement: "INTERFACE_MACHINE_AUTHORSHIP_CORE_RENDER_DEFAULT"
   }));
