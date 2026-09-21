@@ -75,8 +75,8 @@ test("Assembly #41 rejects READY plans that omit or substitute declared portable
   assert.deepEqual(headAssembly, baseAssembly, "Assembly #41 changed assembly semantics before kit planning");
   assert.equal(JSON.stringify(request), before, "Assembly #41 mutated caller-owned request state");
 
-  const baseMaterialized = BaseKit.materializeKit(baseAssembly, MT, { name: "r35 baseline" });
-  const headMaterialized = HeadKit.materializeKit(headAssembly, MT, { name: "r35 accepted" });
+  const baseMaterialized = BaseKit.materializeKit(baseAssembly, MT, { name: "r35 ordinary" });
+  const headMaterialized = HeadKit.materializeKit(headAssembly, MT, { name: "r35 ordinary" });
   assert.equal(baseMaterialized.status, "CANDIDATE", JSON.stringify(baseMaterialized.holds));
   assert.equal(headMaterialized.status, "CANDIDATE", JSON.stringify(headMaterialized.holds));
   assert.deepEqual(headMaterialized.kit, baseMaterialized.kit, "ordinary portable kit drifted");
