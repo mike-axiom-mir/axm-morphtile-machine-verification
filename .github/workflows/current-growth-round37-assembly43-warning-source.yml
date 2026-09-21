@@ -1,0 +1,52 @@
+name: current growth round 37 assembly43 warning source
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round37-assembly43-warning-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: b927da470b6ee92a9ce64c2f5697896dd4e8180c
+          path: assembly43
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Assembly 43 source-integrity candidate
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round37-assembly43-warning-source.test.js 2>&1 | tee round37-assembly43-warning-source.log
+        env:
+          R37_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R37_ASSEMBLY_BASE_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          R37_ASSEMBLY43_ROOT: ${{ github.workspace }}/assembly43
+          R37_ASSEMBLY43_COMMIT: b927da470b6ee92a9ce64c2f5697896dd4e8180c
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Replay exact Assembly candidate suite on Node 20
+        working-directory: assembly43
+        run: npm test
+      - name: Preserve round 37 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round37-assembly43-warning-source-log
+          path: verification/round37-assembly43-warning-source.log
+          if-no-files-found: error
