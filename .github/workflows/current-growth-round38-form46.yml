@@ -1,0 +1,61 @@
+name: current-growth-round38-form46
+
+on:
+  push:
+    branches:
+      - verification/round38-form46-rotation-state
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify-form46:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+
+      - name: Checkout Form integrated predecessor
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: cfd9c39130d639e5eae634ecfb8a7c6bbdf8b7c3
+          path: form-base
+
+      - name: Checkout Form 46 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 0e5a8e1fa0e61aa4d4747378e589a11be8939cf4
+          path: form46
+
+      - name: Checkout pinned MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Independent exact-head attack
+        working-directory: verification
+        env:
+          R38_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R38_FORM_BASE_COMMIT: cfd9c39130d639e5eae634ecfb8a7c6bbdf8b7c3
+          R38_FORM46_ROOT: ${{ github.workspace }}/form46
+          R38_FORM46_COMMIT: 0e5a8e1fa0e61aa4d4747378e589a11be8939cf4
+          R38_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R38_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-growth-round38-form46-rotation-state.test.js
+
+      - name: Replay Form candidate full producer suite independently
+        working-directory: form46
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
