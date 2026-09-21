@@ -1,0 +1,60 @@
+name: current growth round 35 assembly41 assembly42
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round35-assembly41-42:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 8a2a7bf6adf40266438945ad1482001be9d68900
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: aaaea70d7660841b53aca765506970db4aa6b2d8
+          path: assembly-pr41
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 1b345acb9692e2212576cafb2d01d706d1581474
+          path: assembly-pr42
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Assembly 41 and 42 candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round35-assembly41-42.test.js 2>&1 | tee round35-assembly41-42.log
+        env:
+          R35_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R35_ASSEMBLY_BASE_COMMIT: 8a2a7bf6adf40266438945ad1482001be9d68900
+          R35_ASSEMBLY41_ROOT: ${{ github.workspace }}/assembly-pr41
+          R35_ASSEMBLY41_COMMIT: aaaea70d7660841b53aca765506970db4aa6b2d8
+          R35_ASSEMBLY42_ROOT: ${{ github.workspace }}/assembly-pr42
+          R35_ASSEMBLY42_COMMIT: 1b345acb9692e2212576cafb2d01d706d1581474
+          R35_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R35_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 35 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round35-assembly41-42-log
+          path: verification/round35-assembly41-42.log
+          if-no-files-found: error
