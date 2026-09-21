@@ -93,8 +93,9 @@ test("Assembly PR #36: current Interface v0.5 presentation grammar fails closed 
     const producer = interfaceForPlacement(`r24-omitted-${mode}`, { mode });
     assert.equal(producer.status, "CANDIDATE", `${mode}: producer omission control`);
     assert.deepEqual(producer.candidate.operations[1].presentation, { mode });
-    const base = Base.run(assemblyRequest(`r24-base-omitted-${mode}`, producer));
-    const head = Head.run(assemblyRequest(`r24-head-omitted-${mode}`, producer));
+    const request = assemblyRequest(`r24-omitted-${mode}-assembly`, producer);
+    const base = Base.run(request);
+    const head = Head.run(request);
     assert.equal(head.status, "CANDIDATE", JSON.stringify(head.holds));
     assert.deepEqual(head, base, `${mode}: tightened v0.5 grammar must not invent optional presentation defaults`);
     assert.deepEqual(head.candidate.presentation, { mode });
@@ -106,8 +107,9 @@ test("Assembly PR #36: current Interface v0.5 presentation grammar fails closed 
     user_adjustable: false
   });
   assert.equal(falseZeroProducer.status, "CANDIDATE", JSON.stringify(falseZeroProducer.holds));
-  const falseZeroBase = Base.run(assemblyRequest("r24-false-zero-base", falseZeroProducer));
-  const falseZeroHead = Head.run(assemblyRequest("r24-false-zero-head", falseZeroProducer));
+  const falseZeroRequest = assemblyRequest("r24-false-zero-assembly", falseZeroProducer);
+  const falseZeroBase = Base.run(falseZeroRequest);
+  const falseZeroHead = Head.run(falseZeroRequest);
   assert.deepEqual(falseZeroHead, falseZeroBase, "valid false/zero authorship must not be confused with omission");
   assert.deepEqual(falseZeroHead.candidate.presentation, {
     mode: "screen",
