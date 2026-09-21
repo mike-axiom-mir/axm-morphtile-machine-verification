@@ -1,0 +1,92 @@
+name: current growth round 36 form43 interface36
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round36-form43-interface36:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 09d3b1a96a5f62adc9c41870e513ce56d2370966
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: aedc9cad00adcde257f461fb77e06ac95b5034c0
+          path: form43
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 565321eb682b2f4952adfeb2d33693fd61a51e42
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: e8ec5a0497b11bc2bfa14c5d959757f585322e4c
+          path: interface36
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 8a2a7bf6adf40266438945ad1482001be9d68900
+          path: assembly-prev
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly-current
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Form 43 and Interface 36 candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round36-form43-interface36.test.js 2>&1 | tee round36-form43-interface36.log
+        env:
+          R36_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R36_FORM_BASE_COMMIT: 09d3b1a96a5f62adc9c41870e513ce56d2370966
+          R36_FORM43_ROOT: ${{ github.workspace }}/form43
+          R36_FORM43_COMMIT: aedc9cad00adcde257f461fb77e06ac95b5034c0
+          R36_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R36_INTERFACE_BASE_COMMIT: 565321eb682b2f4952adfeb2d33693fd61a51e42
+          R36_INTERFACE36_ROOT: ${{ github.workspace }}/interface36
+          R36_INTERFACE36_COMMIT: e8ec5a0497b11bc2bfa14c5d959757f585322e4c
+          R36_ASSEMBLY_PREV_ROOT: ${{ github.workspace }}/assembly-prev
+          R36_ASSEMBLY_PREV_COMMIT: 8a2a7bf6adf40266438945ad1482001be9d68900
+          R36_ASSEMBLY_CURRENT_ROOT: ${{ github.workspace }}/assembly-current
+          R36_ASSEMBLY_CURRENT_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          R36_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R36_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Replay Interface exact current receiver suite on Node 20
+        working-directory: interface36
+        run: node --test test/assembly-dependency.integration.test.js test/assembly-plan-coverage.integration.test.js
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-current/src
+          MORPHTILE_ASSEMBLY_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 36 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round36-form43-interface36-log
+          path: verification/round36-form43-interface36.log
+          if-no-files-found: error
