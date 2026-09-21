@@ -1,0 +1,46 @@
+name: current growth round 29 assembly wrapper shape
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round29-assembly-wrapper-shape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 3759ffecedb19ad18d45cf1ca61e133bd5c674e6
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: cc9e8a84cfa89d6f07e7aa08c26902769f5135c1
+          path: assembly-pr38
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify rebased Assembly PR 38 wrapper-shape boundary
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round29-assembly-wrapper-shape.test.js 2>&1 | tee round29-assembly-wrapper-shape.log
+        env:
+          R29_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R29_ASSEMBLY_BASE_COMMIT: 3759ffecedb19ad18d45cf1ca61e133bd5c674e6
+          R29_ASSEMBLY38_ROOT: ${{ github.workspace }}/assembly-pr38
+          R29_ASSEMBLY38_COMMIT: cc9e8a84cfa89d6f07e7aa08c26902769f5135c1
+      - name: Preserve round 29 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round29-assembly-wrapper-shape-log
+          path: verification/round29-assembly-wrapper-shape.log
+          if-no-files-found: error
