@@ -46,7 +46,7 @@ jobs:
         working-directory: verification
         run: |
           set -o pipefail
-          node --test test/current-growth-round37-form44-interface37.test.js 2>&1 | tee round37-form44-interface37.log
+          node --test test/current-growth-round37-form44-interface37-v2.test.js 2>&1 | tee round37-form44-interface37.log
         env:
           R37_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
           R37_FORM_BASE_COMMIT: 565798b682b60907ecea91a646df1bbb35157a28
