@@ -1,0 +1,76 @@
+name: current growth round 37 form44 interface37
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round37-form44-interface37:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 565798b682b60907ecea91a646df1bbb35157a28
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 2cd9b5653d9f0561179fe0c2ccb0883e8cd3787a
+          path: form44
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 935774d6f2cca71f528d008f8805397a6333eaea
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 928a5dcde78c0b685227e922d97bf9f70a4cca2c
+          path: interface37
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Form 44 and Interface 37 candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round37-form44-interface37-v2.test.js 2>&1 | tee round37-form44-interface37.log
+        env:
+          R37_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R37_FORM_BASE_COMMIT: 565798b682b60907ecea91a646df1bbb35157a28
+          R37_FORM44_ROOT: ${{ github.workspace }}/form44
+          R37_FORM44_COMMIT: 2cd9b5653d9f0561179fe0c2ccb0883e8cd3787a
+          R37_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R37_INTERFACE_BASE_COMMIT: 935774d6f2cca71f528d008f8805397a6333eaea
+          R37_INTERFACE37_ROOT: ${{ github.workspace }}/interface37
+          R37_INTERFACE37_COMMIT: 928a5dcde78c0b685227e922d97bf9f70a4cca2c
+          R37_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R37_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Replay Interface host presentation proof on Node 20
+        working-directory: interface37
+        run: node --test test/presentation-host.integration.test.js
+        env:
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 37 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round37-form44-interface37-log
+          path: verification/round37-form44-interface37.log
+          if-no-files-found: error
