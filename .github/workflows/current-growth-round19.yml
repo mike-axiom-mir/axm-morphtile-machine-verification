@@ -59,7 +59,12 @@ jobs:
           node-version: 22
       - name: Verify current round 19 boundaries
         working-directory: verification
-        run: set -o pipefail; node --test test/current-growth-round19.test.js 2>&1 | tee round19.log
+        run: |
+          set -o pipefail
+          {
+            node --test --test-name-pattern='Form PR #32|Assembly PR #31|Assembly PR #32' test/current-growth-round19.test.js
+            node --test test/current-growth-round19-interface-corrected.test.js
+          } 2>&1 | tee round19.log
         env:
           R19_CORE_PATH: ${{ github.workspace }}/core-main/core/morphtile.js
           R19_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
