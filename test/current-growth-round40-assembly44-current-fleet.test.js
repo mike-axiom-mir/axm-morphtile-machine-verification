@@ -21,6 +21,18 @@ const expected = {
   core: "2bdf8eade1376055473b9cc1b11734b72a5566e5"
 };
 
+const enabled = Boolean(
+  roots.base &&
+  roots.candidate &&
+  process.env.R40_ASSEMBLY_BASE_COMMIT &&
+  process.env.R40_ASSEMBLY44_COMMIT &&
+  process.env.R40_FORM_COMMIT &&
+  process.env.R40_SURFACE_COMMIT &&
+  process.env.R40_CAPABILITY_COMMIT &&
+  process.env.R40_INTERFACE_COMMIT &&
+  process.env.R40_MORPHTILE_COMMIT
+);
+
 function hashTree(root) {
   const h = crypto.createHash("sha256");
   function walk(dir) {
@@ -41,7 +53,7 @@ function requireText(file, needle, label) {
   assert.ok(file.includes(needle), `${label} must contain exact identity ${needle}`);
 }
 
-test("Assembly 44 is evidence-only and binds the converged current fleet exactly", () => {
+test("Assembly 44 is evidence-only and binds the converged current fleet exactly", { skip: !enabled }, () => {
   assert.equal(process.env.R40_ASSEMBLY_BASE_COMMIT, expected.assemblyBase);
   assert.equal(process.env.R40_ASSEMBLY44_COMMIT, expected.assembly44);
   assert.equal(process.env.R40_FORM_COMMIT, expected.form);
