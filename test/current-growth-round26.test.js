@@ -67,7 +67,7 @@ test("Interface PR #30 re-proves the current Assembly presentation boundary with
 
   const Base = require(path.join(process.env.R26_INTERFACE_BASE_ROOT, "src"));
   const Head = require(path.join(process.env.R26_INTERFACE30_ROOT, "src"));
-  const { run: assemble } = require(path.resolve(process.env.R26_ASSEMBLY_ROOT));
+  const { run: assemble } = require(path.resolve(process.env.R26_ASSEMBLY_ROOT, "src"));
 
   const matter = request();
   const base = exactRun(Base, matter);
