@@ -1,0 +1,92 @@
+name: current growth round 32 form interface assembly
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round32-form-interface-assembly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: bb2c2fe5d4c65ddaed031d645ac024d7040a7682
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: c6ccf57580c2571a1ecce70359e6bef246371619
+          path: form-pr40
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 798038d20adb2c910e046eaa77c63a64da8a25e8
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 9106ee2cc1d67caf28a09e2714dcaf2b9a292747
+          path: interface-pr32
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 4996d524e05ff50a7305c2ebce81b81954f4ac05
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: ae7d0de178e230240f2ce89e75f90feb2cd38876
+          path: assembly-pr40
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Form Interface and Assembly candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round32-form-interface-assembly.test.js 2>&1 | tee round32-form-interface-assembly.log
+        env:
+          R32_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R32_FORM_BASE_COMMIT: bb2c2fe5d4c65ddaed031d645ac024d7040a7682
+          R32_FORM40_ROOT: ${{ github.workspace }}/form-pr40
+          R32_FORM40_COMMIT: c6ccf57580c2571a1ecce70359e6bef246371619
+          R32_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R32_INTERFACE_BASE_COMMIT: 798038d20adb2c910e046eaa77c63a64da8a25e8
+          R32_INTERFACE32_ROOT: ${{ github.workspace }}/interface-pr32
+          R32_INTERFACE32_COMMIT: 9106ee2cc1d67caf28a09e2714dcaf2b9a292747
+          R32_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R32_ASSEMBLY_BASE_COMMIT: 4996d524e05ff50a7305c2ebce81b81954f4ac05
+          R32_ASSEMBLY40_ROOT: ${{ github.workspace }}/assembly-pr40
+          R32_ASSEMBLY40_COMMIT: ae7d0de178e230240f2ce89e75f90feb2cd38876
+          R32_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R32_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently replay Interface exact Assembly receiver suite
+        working-directory: interface-pr32
+        run: node --test test/assembly-dependency.integration.test.js
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-base/src
+          MORPHTILE_ASSEMBLY_COMMIT: 4996d524e05ff50a7305c2ebce81b81954f4ac05
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 32 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round32-form-interface-assembly-log
+          path: verification/round32-form-interface-assembly.log
+          if-no-files-found: error
