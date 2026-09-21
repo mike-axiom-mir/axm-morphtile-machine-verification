@@ -175,7 +175,8 @@ test("Interface PR #33 changes receiver evidence and truth guards without changi
   assert.ok(status.split(/\r?\n/).includes(`- Assembly receiver evidence target: \`${ASSEMBLY_CURRENT}\``), "STATUS receiver identity drifted from executable fixture");
   assert.ok(readme.split(/\r?\n/).some((line) => line.startsWith(`- ASSEMBLY RECEIVER TARGET: exact integrated Assembly \`${ASSEMBLY_CURRENT}\`;`)), "README receiver identity drifted from executable fixture");
   assert.ok(workflow.includes("repository: mike-axiom-mir/axm-morphtile-machine-assembly"), "workflow receiver repository drifted");
-  assert.ok(workflow.includes(`ref: ${ASSEMBLY_CURRENT}`), "workflow receiver commit drifted from executable fixture");
+  assert.ok(workflow.includes('integration-sources.json").assembly.commit'), "workflow no longer derives Assembly receiver identity from the executable fixture");
+  assert.ok(workflow.includes('ref: ${{ steps.pins.outputs.assembly }}'), "workflow no longer checks out the fixture-derived Assembly receiver");
 
   const integrationTest = fs.readFileSync(path.join(headRoot, "test", "assembly-dependency.integration.test.js"), "utf8");
   assert.ok(integrationTest.includes('item.kind === "KIT_RECEIVER_CLOSURE"'), "Interface receiver suite does not require closure evidence");
@@ -188,7 +189,7 @@ test("Interface PR #33 changes receiver evidence and truth guards without changi
     assembly_receiver_commit: ASSEMBLY_CURRENT,
     morphtile_commit: MORPHTILE,
     status: "PASS",
-    checked: ["src-byte-identity", "machine-byte-identity", "package-byte-identity", "fixture-receiver-pin", "core-pin", "status-truth", "readme-truth", "workflow-receiver-pin", "closure-evidence-required"],
+    checked: ["src-byte-identity", "machine-byte-identity", "package-byte-identity", "fixture-receiver-pin", "core-pin", "status-truth", "readme-truth", "workflow-fixture-derived-receiver", "closure-evidence-required"],
     placement: "INTERFACE_RECEIVER_CLOSURE_EVIDENCE"
   }));
 });
