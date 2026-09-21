@@ -1,0 +1,86 @@
+name: current growth round 17
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round17:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: fd0098928b39fc34f1c16e6d922fc72b7faa1961
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 8deaa6cd9c5f9125ea501285e2a2eb95511efefc
+          path: form-pr29
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 91a2338e279c11547d0efa55a6c663010997467d
+          path: form-pr30
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 895c0330422e9639cac2308da38821ac44942ad9
+          path: surface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: be45f09a3f97729787a48270c3e26eeb6c63c18e
+          path: surface-pr29
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: dd93d83f1fc93536851a9cb0025255241172104f
+          path: interface-pr25
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: b5d4ff78d2f0a4f1b695aff128bdaa4aa420133c
+          path: assembly-pr30
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 17 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round17.test.js 2>&1 | tee round17.log
+        env:
+          R17_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R17_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R17_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R17_FORM_BASE_COMMIT: fd0098928b39fc34f1c16e6d922fc72b7faa1961
+          R17_FORM29_ROOT: ${{ github.workspace }}/form-pr29
+          R17_FORM29_COMMIT: 8deaa6cd9c5f9125ea501285e2a2eb95511efefc
+          R17_FORM30_ROOT: ${{ github.workspace }}/form-pr30
+          R17_FORM30_COMMIT: 91a2338e279c11547d0efa55a6c663010997467d
+          R17_SURFACE_BASE_ROOT: ${{ github.workspace }}/surface-base
+          R17_SURFACE_BASE_COMMIT: 895c0330422e9639cac2308da38821ac44942ad9
+          R17_SURFACE_ROOT: ${{ github.workspace }}/surface-pr29
+          R17_SURFACE_COMMIT: be45f09a3f97729787a48270c3e26eeb6c63c18e
+          R17_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr25
+          R17_INTERFACE_COMMIT: dd93d83f1fc93536851a9cb0025255241172104f
+          R17_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr30
+          R17_ASSEMBLY_COMMIT: b5d4ff78d2f0a4f1b695aff128bdaa4aa420133c
+      - name: Preserve round 17 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round17-log
+          path: verification/round17.log
+          if-no-files-found: error
