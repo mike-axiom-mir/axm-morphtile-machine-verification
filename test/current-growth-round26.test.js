@@ -2,6 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -56,6 +57,36 @@ function exactRun(machine, matter) {
   return first;
 }
 
+function treeReceipt(root) {
+  const receipt = {};
+
+  function visit(directory, prefix) {
+    const entries = fs.readdirSync(directory, { withFileTypes: true })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    for (const entry of entries) {
+      const absolute = path.join(directory, entry.name);
+      const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        visit(absolute, relative);
+        continue;
+      }
+      assert.equal(entry.isFile(), true, `unexpected non-file source entry at ${relative}`);
+      receipt[relative] = crypto.createHash("sha256").update(fs.readFileSync(absolute)).digest("hex");
+    }
+  }
+
+  visit(root, "");
+  return receipt;
+}
+
+function assertFileBytesEqual(baseRoot, headRoot, relative) {
+  assert.deepEqual(
+    fs.readFileSync(path.join(headRoot, relative)),
+    fs.readFileSync(path.join(baseRoot, relative)),
+    `evidence-only Interface candidate changed ${relative}`
+  );
+}
+
 const enabled = !!process.env.R26_INTERFACE_BASE_ROOT
   && !!process.env.R26_INTERFACE30_ROOT
   && !!process.env.R26_ASSEMBLY_ROOT;
@@ -65,8 +96,19 @@ test("Interface PR #30 re-proves the current Assembly presentation boundary with
   assert.equal(process.env.R26_INTERFACE30_COMMIT, INTERFACE30);
   assert.equal(process.env.R26_ASSEMBLY_COMMIT, ASSEMBLY);
 
-  const Base = require(path.join(process.env.R26_INTERFACE_BASE_ROOT, "src"));
-  const Head = require(path.join(process.env.R26_INTERFACE30_ROOT, "src"));
+  const baseRoot = process.env.R26_INTERFACE_BASE_ROOT;
+  const headRoot = process.env.R26_INTERFACE30_ROOT;
+  assert.deepEqual(
+    treeReceipt(path.join(headRoot, "src")),
+    treeReceipt(path.join(baseRoot, "src")),
+    "evidence-only Interface candidate changed runtime source bytes"
+  );
+  for (const relative of ["machine.json", "package.json", ".github/workflows/test.yml"]) {
+    assertFileBytesEqual(baseRoot, headRoot, relative);
+  }
+
+  const Base = require(path.join(baseRoot, "src"));
+  const Head = require(path.join(headRoot, "src"));
   const { run: assemble } = require(path.resolve(process.env.R26_ASSEMBLY_ROOT, "src"));
 
   const matter = request();
@@ -101,7 +143,7 @@ test("Interface PR #30 re-proves the current Assembly presentation boundary with
     "Assembly receiver changed Interface target-proof dependencies");
 
   const pins = JSON.parse(fs.readFileSync(
-    path.join(process.env.R26_INTERFACE30_ROOT, "fixtures", "integration-sources.json"),
+    path.join(headRoot, "fixtures", "integration-sources.json"),
     "utf8"
   ));
   assert.equal(pins.assembly.commit, ASSEMBLY,
