@@ -1,0 +1,107 @@
+name: current growth round 23
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round23:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: d4da0515c290b0b504c02b9d29e974d3add4e6b5
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 3e4485a6d15b053d87a338790e04dc06f9684305
+          path: form-pr36
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 96dfea316216922dffca872ec083a549e4777c96
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: d297777a93c76f25c1cf25d7772b0a9f53741b3b
+          path: interface-pr29
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 3a4af4417de21fff862bf309e3576c362bcac7f5
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: e8fb9fd02671a8ffa719409cca5c4197fbd3c2cc
+          path: assembly-pr35
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify round 23 independent boundaries
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round23.test.js 2>&1 | tee round23.log
+        env:
+          R23_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R23_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R23_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R23_FORM_BASE_COMMIT: d4da0515c290b0b504c02b9d29e974d3add4e6b5
+          R23_FORM36_ROOT: ${{ github.workspace }}/form-pr36
+          R23_FORM36_COMMIT: 3e4485a6d15b053d87a338790e04dc06f9684305
+          R23_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R23_INTERFACE_BASE_COMMIT: 96dfea316216922dffca872ec083a549e4777c96
+          R23_INTERFACE29_ROOT: ${{ github.workspace }}/interface-pr29
+          R23_INTERFACE29_COMMIT: d297777a93c76f25c1cf25d7772b0a9f53741b3b
+          R23_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R23_ASSEMBLY_BASE_COMMIT: 3a4af4417de21fff862bf309e3576c362bcac7f5
+          R23_ASSEMBLY35_ROOT: ${{ github.workspace }}/assembly-pr35
+          R23_ASSEMBLY35_COMMIT: e8fb9fd02671a8ffa719409cca5c4197fbd3c2cc
+          R23_SURFACE_ROOT: ${{ github.workspace }}/surface
+          R23_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          R23_CAPABILITY_ROOT: ${{ github.workspace }}/capability
+          R23_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+      - name: Re-run Interface PR 29 exact Assembly receiver proof outside nested test context
+        working-directory: interface-pr29
+        run: |
+          set -o pipefail
+          node --test test/assembly-dependency.integration.test.js 2>&1 | tee ../verification/round23-interface-receiver.log
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-base/src
+          MORPHTILE_ASSEMBLY_COMMIT: 3a4af4417de21fff862bf309e3576c362bcac7f5
+          MORPHTILE_CORE: ../core/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 23 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round23-logs
+          path: |
+            verification/round23.log
+            verification/round23-interface-receiver.log
+          if-no-files-found: error
