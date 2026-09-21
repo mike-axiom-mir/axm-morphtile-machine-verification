@@ -1,0 +1,89 @@
+name: current growth round 21
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round21:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 379b25f35f90ad6998c7967d3b112478186540f0
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: c3d9024daeeef37e7f337aa594d1a5a134f3929f
+          path: form-pr34
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 13ff908b84094e81ee422bf59292fccabfeeea59
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 0c82830f1b8048fbe0f62f04204ca17e96fc0c32
+          path: interface-pr28
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 92f97d4d9b002c76d37a14910e05e65a60f78de8
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: bd207d70acfd3466b674964e77db19bae553d28a
+          path: assembly-pr34
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify current round 21 boundaries
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round21.test.js 2>&1 | tee round21.log
+        env:
+          R21_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R21_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R21_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R21_FORM_BASE_COMMIT: 379b25f35f90ad6998c7967d3b112478186540f0
+          R21_FORM34_ROOT: ${{ github.workspace }}/form-pr34
+          R21_FORM34_COMMIT: c3d9024daeeef37e7f337aa594d1a5a134f3929f
+          R21_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R21_INTERFACE_BASE_COMMIT: 13ff908b84094e81ee422bf59292fccabfeeea59
+          R21_INTERFACE28_ROOT: ${{ github.workspace }}/interface-pr28
+          R21_INTERFACE28_COMMIT: 0c82830f1b8048fbe0f62f04204ca17e96fc0c32
+          R21_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R21_ASSEMBLY_BASE_COMMIT: 92f97d4d9b002c76d37a14910e05e65a60f78de8
+          R21_ASSEMBLY34_ROOT: ${{ github.workspace }}/assembly-pr34
+          R21_ASSEMBLY34_COMMIT: bd207d70acfd3466b674964e77db19bae553d28a
+      - name: Replay Interface PR 28 against its exact pinned Assembly receiver on Node 22
+        working-directory: interface-pr28
+        run: node --test test/assembly-dependency.integration.test.js 2>&1 | tee -a ../verification/round21.log
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-base/src
+          MORPHTILE_ASSEMBLY_COMMIT: 92f97d4d9b002c76d37a14910e05e65a60f78de8
+          MORPHTILE_CORE: ../core/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 21 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round21-log
+          path: verification/round21.log
+          if-no-files-found: error
