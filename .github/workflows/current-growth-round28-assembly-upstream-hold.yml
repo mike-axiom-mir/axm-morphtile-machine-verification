@@ -1,0 +1,46 @@
+name: current growth round 28 assembly upstream HOLD
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round28-assembly-upstream-hold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 27e9dc30a5148b73f9ea76a72c400f20111656b1
+          path: assembly-pr37
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Assembly PR 37 upstream HOLD integrity
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round28-assembly-upstream-hold.test.js 2>&1 | tee round28-assembly-upstream-hold.log
+        env:
+          R28_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R28_ASSEMBLY_BASE_COMMIT: 4b7f89f83dff90d07ab6e70b7b40e8623579bbf1
+          R28_ASSEMBLY37_ROOT: ${{ github.workspace }}/assembly-pr37
+          R28_ASSEMBLY37_COMMIT: 27e9dc30a5148b73f9ea76a72c400f20111656b1
+      - name: Preserve round 28 Assembly HOLD log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round28-assembly-upstream-hold-log
+          path: verification/round28-assembly-upstream-hold.log
+          if-no-files-found: error
