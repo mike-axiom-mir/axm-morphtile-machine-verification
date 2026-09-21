@@ -1,0 +1,65 @@
+name: current growth round 12
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round12:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 8161cbb30e279ff6bb5522ae6ad6eefd9e98fd56
+          path: form-pr24
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 3dfe1ce0fdadbf83fa330a088429ed3806c14583
+          path: surface-pr23
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: e28c9a380d6425cb6611d7a74903bf8e89dd0c62
+          path: interface-pr19
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 675ec2498ff94969ad198843ba65aa145134da6c
+          path: assembly-main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 12 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round12.test.js 2>&1 | tee round12.log
+        env:
+          R12_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R12_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R12_FORM_ROOT: ${{ github.workspace }}/form-pr24
+          R12_FORM_COMMIT: 8161cbb30e279ff6bb5522ae6ad6eefd9e98fd56
+          R12_SURFACE_ROOT: ${{ github.workspace }}/surface-pr23
+          R12_SURFACE_COMMIT: 3dfe1ce0fdadbf83fa330a088429ed3806c14583
+          R12_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr19
+          R12_INTERFACE_COMMIT: e28c9a380d6425cb6611d7a74903bf8e89dd0c62
+          R12_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-main
+          R12_ASSEMBLY_COMMIT: 675ec2498ff94969ad198843ba65aa145134da6c
+      - name: Preserve round 12 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round12-log
+          path: verification/round12.log
+          if-no-files-found: error
