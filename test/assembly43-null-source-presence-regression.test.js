@@ -4,8 +4,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("node:path");
 
-const ASSEMBLY_BASE = "c45f8305196d149362045cef339ff1634f9095fe";
-const ASSEMBLY43 = "b927da470b6ee92a9ce64c2f5697896dd4e8180c";
+const ASSEMBLY_BASE = "21d87499e162da2b583959b8344d4c8ec80be74a";
+const ASSEMBLY43 = "08a11e78ab6d4d8bc267b4fd70ec0a846edc51da";
 
 const enabled = !!process.env.A43_ASSEMBLY_BASE_ROOT && !!process.env.A43_ASSEMBLY43_ROOT;
 
@@ -32,11 +32,11 @@ function request(authoredNull) {
         }
       }
     ],
-    provenance: { caller: "verification-assembly43" }
+    provenance: { caller: "verification-assembly43-current-head" }
   };
 }
 
-test("Assembly #43 still collapses authored null machine id into absence in compact warning provenance", { skip: !enabled }, () => {
+test("Assembly #43 current exact head still collapses authored null machine id into absence in compact warning provenance", { skip: !enabled }, () => {
   assert.equal(process.env.A43_ASSEMBLY_BASE_COMMIT, ASSEMBLY_BASE);
   assert.equal(process.env.A43_ASSEMBLY43_COMMIT, ASSEMBLY43);
 
@@ -68,15 +68,14 @@ test("Assembly #43 still collapses authored null machine id into absence in comp
   assert.equal(Object.prototype.hasOwnProperty.call(headAbsent.source_provenance[0].machine, "id"), false,
     "full source provenance must distinguish true absence");
 
-  // Establish that this ambiguity predates #43 rather than fabricating a new regression.
+  // Establish that the ambiguity is inherited rather than fabricated by this converged head.
   assert.equal(baseNull.warnings[0].machine, null);
   assert.equal(baseAbsent.warnings[0].machine, null);
 
-  // #43 claims own-key presence is now the warning-source identity boundary and that
-  // null is the warning-source sentinel only when no machine.id key was authored.
-  // Those two authored states therefore must no longer collapse to the same compact
-  // warning source representation. The current exact candidate still emits null for
-  // both, so this assertion intentionally remains red until the producer owns a repair.
+  // #43 claims own-key presence is now the compact warning-source identity boundary and
+  // that null is the absence sentinel. Authored null and true absence therefore must not
+  // collapse to the same compact warning representation. This assertion intentionally
+  // remains red until Assembly owns a policy/representation repair.
   assert.notDeepEqual(
     headNull.warnings[0],
     headAbsent.warnings[0],
