@@ -46,7 +46,7 @@ jobs:
           path: interface-pr26
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Verify current round 18 boundaries
         working-directory: verification
         run: set -o pipefail; node --test test/current-growth-round18.test.js 2>&1 | tee round18.log
