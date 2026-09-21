@@ -1,0 +1,65 @@
+name: current growth round 13
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round13:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 3b6d448e76b521a81aac3599a77a69e4e8fbcb64
+          path: form-pr25
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: e37fc547f8ccdbfdf8ac49c9ca48458469fad453
+          path: surface-pr24
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: b6f5e6652f3694aab3d954d0a98291130f90370e
+          path: interface-pr20
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 23911cc53ece55f86d68bc481b688ca506c43278
+          path: assembly-pr26
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 13 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round13.test.js 2>&1 | tee round13.log
+        env:
+          R13_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R13_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R13_FORM_ROOT: ${{ github.workspace }}/form-pr25
+          R13_FORM_COMMIT: 3b6d448e76b521a81aac3599a77a69e4e8fbcb64
+          R13_SURFACE_ROOT: ${{ github.workspace }}/surface-pr24
+          R13_SURFACE_COMMIT: e37fc547f8ccdbfdf8ac49c9ca48458469fad453
+          R13_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr20
+          R13_INTERFACE_COMMIT: b6f5e6652f3694aab3d954d0a98291130f90370e
+          R13_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr26
+          R13_ASSEMBLY_COMMIT: 23911cc53ece55f86d68bc481b688ca506c43278
+      - name: Preserve round 13 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round13-log
+          path: verification/round13.log
+          if-no-files-found: error
