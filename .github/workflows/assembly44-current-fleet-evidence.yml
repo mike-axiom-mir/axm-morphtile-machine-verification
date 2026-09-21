@@ -1,0 +1,91 @@
+name: assembly 44 refreshed current fleet evidence
+
+on:
+  push:
+    branches:
+      - verification/assembly44-current-fleet-evidence
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assembly44-current-fleet-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 6107864c5c13c8e0b3461ff8892661b05c488866
+          path: assembly44
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          path: form
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ec92507b82d855de49ba024ecfdd32aada24b186
+          path: interface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bind Assembly evidence-only runtime identity
+        working-directory: verification
+        run: node --test test/assembly44-current-fleet-evidence-identity.test.js
+        env:
+          A44_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          A44_BASE_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          A44_HEAD_ROOT: ${{ github.workspace }}/assembly44
+          A44_HEAD_COMMIT: 6107864c5c13c8e0b3461ff8892661b05c488866
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently replay exact Assembly 44 current-fleet receiver proof
+        working-directory: assembly44
+        run: |
+          set -o pipefail
+          node --test test/round37-current-fleet.integration.test.js 2>&1 | tee ../verification/assembly44-current-fleet.log
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface/src
+          CURRENT_INTERFACE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve Assembly 44 replay log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembly44-current-fleet-evidence-log
+          path: verification/assembly44-current-fleet.log
+          if-no-files-found: error
