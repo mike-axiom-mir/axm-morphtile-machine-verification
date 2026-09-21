@@ -174,24 +174,26 @@ test("Interface PR #26: integration-truth convergence changes docs only and name
 });
 
 const hasCoreHold = !!process.env.R18_CORE_MAIN_ROOT && !!process.env.R18_CORE17_ROOT;
-test("MorphTile core PR #17: current regression head independently reproduces exactly the two lexical presentation-scope failures while main view tests remain green", { skip: !hasCoreHold }, () => {
+test("MorphTile core PR #17: exact producer suite reproduces only the two lexical presentation-scope failures while current main suite stays green", { skip: !hasCoreHold }, () => {
   assert.equal(process.env.R18_CORE_MAIN_COMMIT, CORE_MAIN);
   assert.equal(process.env.R18_CORE17_COMMIT, CORE_PR17);
 
-  const mainRun = spawnSync(process.execPath, ["--test", "test/views.js"], {
-    cwd: process.env.R18_CORE_MAIN_ROOT,
-    encoding: "utf8"
+  const runSuite = (cwd) => spawnSync("npm", ["test"], {
+    cwd,
+    encoding: "utf8",
+    maxBuffer: 8 * 1024 * 1024
   });
+
+  const mainRun = runSuite(process.env.R18_CORE_MAIN_ROOT);
   assert.equal(mainRun.status, 0, `${mainRun.stdout}\n${mainRun.stderr}`);
 
-  const holdRun = spawnSync(process.execPath, ["--test", "test/views.js"], {
-    cwd: process.env.R18_CORE17_ROOT,
-    encoding: "utf8"
-  });
+  const holdRun = runSuite(process.env.R18_CORE17_ROOT);
   const output = `${holdRun.stdout}\n${holdRun.stderr}`;
-  assert.notEqual(holdRun.status, 0, "the regression-only core candidate must remain red until implementation exists");
+  assert.notEqual(holdRun.status, 0, "the regression-only core candidate must remain red through the exact producer suite until implementation exists");
   assert.match(output, /an interface can be written over repeats and expressions, like everything else/);
   assert.match(output, /repeat lexical scope reaches expression-backed node labels without changing action or control authority/);
+  assert.match(output, /# tests 195\b/);
+  assert.match(output, /# pass 193\b/);
   assert.match(output, /# fail 2\b/);
   assert.match(output, /expression-backed text sees the repeat lexical index rather than only outer canonical vars/);
   assert.match(output, /meter 0/, "node-label regression must fail after the preceding signal/control authority assertions have already passed");
@@ -202,14 +204,15 @@ test("MorphTile core PR #17: current regression head independently reproduces ex
     baseline_commit: CORE_MAIN,
     status: "HOLD_RECONFIRMED",
     checked: [
-      "current-main-view-suite-green",
-      "regression-head-intentionally-red",
-      "exactly-two-failures",
+      "current-main-exact-producer-suite-green",
+      "regression-head-exact-producer-suite-intentionally-red",
+      "195-tests-193-pass-exactly-two-failures",
       "expression-text-repeat-scope-gap",
       "expression-node-label-repeat-scope-gap",
       "action-control-authority-not-the-failing-boundary"
     ],
     placement: "MORPHTILE_CORE_RUNTIME_SCOPE",
+    invocation: "npm test on Node 22",
     merge_allowed: false
   }));
 });
