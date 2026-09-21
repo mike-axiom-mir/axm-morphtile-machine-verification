@@ -1,0 +1,37 @@
+name: current growth round 32 assembly final head
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  assembly-final-head:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: ae7d0de178e230240f2ce89e75f90feb2cd38876
+          path: assembly-functional
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: d8d6af30116b2acd6cc4b987c346b1ee17a5a124
+          path: assembly-final
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify final exact-head executable identity
+        working-directory: verification
+        run: node --test test/current-growth-round32-assembly-final-head.test.js
+        env:
+          R32_ASSEMBLY40_FUNCTIONAL_ROOT: ${{ github.workspace }}/assembly-functional
+          R32_ASSEMBLY40_FUNCTIONAL_COMMIT: ae7d0de178e230240f2ce89e75f90feb2cd38876
+          R32_ASSEMBLY40_FINAL_ROOT: ${{ github.workspace }}/assembly-final
+          R32_ASSEMBLY40_FINAL_COMMIT: d8d6af30116b2acd6cc4b987c346b1ee17a5a124
