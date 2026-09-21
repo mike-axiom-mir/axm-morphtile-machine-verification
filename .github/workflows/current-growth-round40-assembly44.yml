@@ -1,0 +1,118 @@
+name: current-growth-round40-assembly44
+
+on:
+  push:
+    branches:
+      - verification/round40-assembly44-current-fleet
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly44-current-fleet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+
+      - name: Checkout Assembly integrated base
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly-base
+
+      - name: Checkout Assembly 44 exact head
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 6107864c5c13c8e0b3461ff8892661b05c488866
+          path: assembly44
+
+      - name: Checkout current Form
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          path: form
+
+      - name: Checkout current Surface
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+
+      - name: Checkout current Capability
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+
+      - name: Checkout current Interface
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ec92507b82d855de49ba024ecfdd32aada24b186
+          path: interface
+
+      - name: Checkout MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Independent exact identity and evidence attack
+        working-directory: verification
+        env:
+          R40_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          R40_ASSEMBLY_BASE_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          R40_ASSEMBLY44_ROOT: ${{ github.workspace }}/assembly44
+          R40_ASSEMBLY44_COMMIT: 6107864c5c13c8e0b3461ff8892661b05c488866
+          R40_FORM_COMMIT: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          R40_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          R40_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          R40_INTERFACE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          R40_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-growth-round40-assembly44-current-fleet.test.js
+
+      - name: Replay exact current-fleet receiver proof
+        working-directory: assembly44
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface/src
+          CURRENT_INTERFACE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round37-current-fleet.integration.test.js
+
+      - name: Replay Assembly candidate full suite
+        working-directory: assembly44
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: e551c53f642ceaa77c89dcd5b907c95fd59463dc
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface/src
+          CURRENT_INTERFACE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
