@@ -100,16 +100,16 @@ test("Form #47 exact head centralizes repeat size state without moving validatio
   assert.deepEqual(combinedTarget.size[0], ["+", 1, ["*", ["var", "i"], 0.2]]);
   assert.deepEqual(combinedTarget.rot[1], ["+", 0.1, ["*", ["var", "i"], 0.3]]);
 
-  for (const [id, repeat] of [
-    ["malformed-step", { count: 3, step: [1,0,0], size_step: [0.2,0], part: { shape: "box" } }],
-    ["malformed-base", { count: 3, step: [1,0,0], size_step: [0.2,0,0], part: { shape: "box", size: [1,1] } }],
-    ["noop", { count: 3, step: [1,0,0], size_step: [0,0,0], part: { shape: "box" } }],
-    ["nonpositive", { count: 3, step: [1,0,0], size_step: [-0.6,0,0], part: { shape: "box", size: [1,1,1] } }],
-    ["overflow", { count: 2, step: [1,0,0], size_step: [Number.MAX_VALUE,0,0], part: { shape: "box", size: [Number.MAX_VALUE,1,1] } }]
+  for (const [id, repeat, expectedCode] of [
+    ["malformed-step", { count: 3, step: [1,0,0], size_step: [0.2,0], part: { shape: "box" } }, "HOLD_FORM_REPEAT_INVALID"],
+    ["malformed-base", { count: 3, step: [1,0,0], size_step: [0.2,0,0], part: { shape: "box", size: [1,1] } }, "HOLD_FORM_PARAMETER_INVALID"],
+    ["noop", { count: 3, step: [1,0,0], size_step: [0,0,0], part: { shape: "box" } }, "HOLD_FORM_REPEAT_INVALID"],
+    ["nonpositive", { count: 3, step: [1,0,0], size_step: [-0.6,0,0], part: { shape: "box", size: [1,1,1] } }, "HOLD_FORM_REPEAT_INVALID"],
+    ["overflow", { count: 2, step: [1,0,0], size_step: [Number.MAX_VALUE,0,0], part: { shape: "box", size: [Number.MAX_VALUE,1,1] } }, "HOLD_FORM_REPEAT_INVALID"]
   ]) {
     const held = equivalentRun(Base, Head, request(`r41-${id}`, { repeat }), id);
     assert.equal(held.status, "HOLD", id);
-    assert.equal(held.holds[0].code, "HOLD_FORM_REPEAT_INVALID", id);
+    assert.equal(held.holds[0].code, expectedCode, id);
   }
 
   const collision = equivalentRun(Base, Head, request("r41-size-collision", {
