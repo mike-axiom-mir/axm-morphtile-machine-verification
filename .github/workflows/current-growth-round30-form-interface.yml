@@ -1,0 +1,84 @@
+name: current growth round 30 form interface
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round30-form-interface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 32ffc491684b82165374e14618b197c39d84b474
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 2493734dae9b91f0da91171576a9bba435a9bf2a
+          path: form-pr39
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: bcfb0189773c5ddf20b7b85887b61995c371c347
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: c6468d46a1393e4a67318a0dce2fc66eda044935
+          path: interface-pr31
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 9fe8b53daf3e572c596c142859cca2199a976553
+          path: assembly
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Form and Interface candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round30-form-interface.test.js 2>&1 | tee round30-form-interface.log
+        env:
+          R30_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R30_FORM_BASE_COMMIT: 32ffc491684b82165374e14618b197c39d84b474
+          R30_FORM39_ROOT: ${{ github.workspace }}/form-pr39
+          R30_FORM39_COMMIT: 2493734dae9b91f0da91171576a9bba435a9bf2a
+          R30_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R30_INTERFACE_BASE_COMMIT: bcfb0189773c5ddf20b7b85887b61995c371c347
+          R30_INTERFACE31_ROOT: ${{ github.workspace }}/interface-pr31
+          R30_INTERFACE31_COMMIT: c6468d46a1393e4a67318a0dce2fc66eda044935
+          R30_ASSEMBLY_COMMIT: 9fe8b53daf3e572c596c142859cca2199a976553
+          R30_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R30_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently replay Interface Assembly receiver suite
+        working-directory: interface-pr31
+        run: node --test test/assembly-dependency.integration.test.js
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: 9fe8b53daf3e572c596c142859cca2199a976553
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 30 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round30-form-interface-log
+          path: verification/round30-form-interface.log
+          if-no-files-found: error
