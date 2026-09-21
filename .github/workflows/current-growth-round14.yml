@@ -1,0 +1,65 @@
+name: current growth round 14
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round14:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 820434a03ba0a5733a68caa585f90a1385c74d77
+          path: form-pr26
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: d0e1c316f18ca24f681ceb1c6cde7cd6c9a2078b
+          path: surface-pr25
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 0d3778f73432eb045d90021b02b6ffef0e1fe970
+          path: interface-pr21
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 937b32697ab97a8be8b7fe28185db8bb92ace111
+          path: assembly-pr27
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 14 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round14.test.js 2>&1 | tee round14.log
+        env:
+          R14_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R14_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R14_FORM_ROOT: ${{ github.workspace }}/form-pr26
+          R14_FORM_COMMIT: 820434a03ba0a5733a68caa585f90a1385c74d77
+          R14_SURFACE_ROOT: ${{ github.workspace }}/surface-pr25
+          R14_SURFACE_COMMIT: d0e1c316f18ca24f681ceb1c6cde7cd6c9a2078b
+          R14_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr21
+          R14_INTERFACE_COMMIT: 0d3778f73432eb045d90021b02b6ffef0e1fe970
+          R14_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr27
+          R14_ASSEMBLY_COMMIT: 937b32697ab97a8be8b7fe28185db8bb92ace111
+      - name: Preserve round 14 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round14-log
+          path: verification/round14.log
+          if-no-files-found: error
