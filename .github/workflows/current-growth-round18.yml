@@ -1,0 +1,73 @@
+name: current growth round 18
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round18:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 8e8dc095ffe9b4a81ed07e05203c8c5ca979dd56
+          path: core-pr17
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 679573783f9f8d925d64089bf3b871dadcac5d11
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: a44fd9509e4b832f6faf354d2b88a6f257bc9dd5
+          path: form-pr31
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: d1c2ee9d25d9f8db1dbb1c907e9d022928467f70
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 0c391e0042e8be97fb0f28daffed2d49f1f63eaa
+          path: interface-pr26
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 18 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round18.test.js 2>&1 | tee round18.log
+        env:
+          R18_CORE_MAIN_ROOT: ${{ github.workspace }}/core-main
+          R18_CORE_MAIN_PATH: ${{ github.workspace }}/core-main/core/morphtile.js
+          R18_CORE_MAIN_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R18_CORE17_ROOT: ${{ github.workspace }}/core-pr17
+          R18_CORE17_COMMIT: 8e8dc095ffe9b4a81ed07e05203c8c5ca979dd56
+          R18_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R18_FORM_BASE_COMMIT: 679573783f9f8d925d64089bf3b871dadcac5d11
+          R18_FORM31_ROOT: ${{ github.workspace }}/form-pr31
+          R18_FORM31_COMMIT: a44fd9509e4b832f6faf354d2b88a6f257bc9dd5
+          R18_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R18_INTERFACE_BASE_COMMIT: d1c2ee9d25d9f8db1dbb1c907e9d022928467f70
+          R18_INTERFACE26_ROOT: ${{ github.workspace }}/interface-pr26
+          R18_INTERFACE26_COMMIT: 0c391e0042e8be97fb0f28daffed2d49f1f63eaa
+      - name: Preserve round 18 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round18-log
+          path: verification/round18.log
+          if-no-files-found: error
