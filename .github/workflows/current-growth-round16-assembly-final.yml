@@ -1,0 +1,37 @@
+name: current growth round 16 assembly final
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  assembly-final:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: ff718341b7b69b23e117d9fb95e2a216a21f7b55
+          path: assembly-pr29-final
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Replay Assembly PR 29 final exact head
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round16-assembly-final.test.js 2>&1 | tee round16-assembly-final.log
+        env:
+          R16_ASSEMBLY_FINAL_ROOT: ${{ github.workspace }}/assembly-pr29-final
+          R16_ASSEMBLY_FINAL_COMMIT: ff718341b7b69b23e117d9fb95e2a216a21f7b55
+      - name: Preserve final-head replay log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round16-assembly-final-log
+          path: verification/round16-assembly-final.log
+          if-no-files-found: error

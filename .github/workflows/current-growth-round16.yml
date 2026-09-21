@@ -1,0 +1,72 @@
+name: current growth round 16
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round16:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 7fa4f48f120947112917e36797c7d7437fdcb0a7
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 239654a4867b55d35f0e57a70939fb7ad88c8862
+          path: form-pr28
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 095338af0f244254e5a583d957cf7e089df23dfa
+          path: surface-pr27
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 0a5aac9d96d97486a4086aaea6fa0a9287d8801e
+          path: interface-pr24
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 16b96453bfd651579909da11a0deba8fa7d1a660
+          path: assembly-pr29
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 16 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round16.test.js 2>&1 | tee round16.log
+        env:
+          R16_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R16_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R16_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R16_FORM_BASE_COMMIT: 7fa4f48f120947112917e36797c7d7437fdcb0a7
+          R16_FORM_HEAD_ROOT: ${{ github.workspace }}/form-pr28
+          R16_FORM_HEAD_COMMIT: 239654a4867b55d35f0e57a70939fb7ad88c8862
+          R16_SURFACE_ROOT: ${{ github.workspace }}/surface-pr27
+          R16_SURFACE_COMMIT: 095338af0f244254e5a583d957cf7e089df23dfa
+          R16_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr24
+          R16_INTERFACE_COMMIT: 0a5aac9d96d97486a4086aaea6fa0a9287d8801e
+          R16_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr29
+          R16_ASSEMBLY_COMMIT: 16b96453bfd651579909da11a0deba8fa7d1a660
+      - name: Preserve round 16 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round16-log
+          path: verification/round16.log
+          if-no-files-found: error
