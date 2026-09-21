@@ -1,4 +1,4 @@
-name: current-growth-round39-form45
+name: current-growth-round39-form45-interface38
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Independent exact-head attack
+      - name: Independent Form exact-head attack
         working-directory: verification
         env:
           R39_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
@@ -62,3 +62,57 @@ jobs:
           MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
           MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
         run: npm test
+
+  verify-interface38:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+
+      - name: Checkout Interface integrated predecessor
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 58ccd3e05e63f18e9ad081a75bbce5e78edd28c8
+          path: interface-base
+
+      - name: Checkout Interface 38 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: b1b37b28204ecf81623eb5d0caca7dc7aa8186f9
+          path: interface38
+
+      - name: Checkout current Assembly receiver
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly
+
+      - name: Checkout pinned MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Independent Interface namespace attack
+        working-directory: verification
+        env:
+          R39_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R39_INTERFACE_BASE_COMMIT: 58ccd3e05e63f18e9ad081a75bbce5e78edd28c8
+          R39_INTERFACE38_ROOT: ${{ github.workspace }}/interface38
+          R39_INTERFACE38_COMMIT: b1b37b28204ecf81623eb5d0caca7dc7aa8186f9
+          R39_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly
+          R39_ASSEMBLY_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          R39_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R39_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-growth-round39-interface38-binding-namespaces.test.js
