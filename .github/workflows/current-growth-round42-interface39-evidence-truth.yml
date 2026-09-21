@@ -1,0 +1,51 @@
+name: current-growth-round42-interface39-evidence-truth
+
+on:
+  push:
+    branches:
+      - verification/round42-interface39-evidence-truth
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface39:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+
+      - name: Checkout Interface integrated predecessor
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ec92507b82d855de49ba024ecfdd32aada24b186
+          path: interface-base
+
+      - name: Checkout Interface 39 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ef20bba019167a07be1045b2d0affad04c82daa7
+          path: interface39
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Independent Interface evidence-truth attack
+        working-directory: verification
+        env:
+          R42_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R42_INTERFACE_BASE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          R42_INTERFACE39_ROOT: ${{ github.workspace }}/interface39
+          R42_INTERFACE39_COMMIT: ef20bba019167a07be1045b2d0affad04c82daa7
+        run: node --test test/current-growth-round42-interface39-evidence-truth.test.js
+
+      - name: Replay Interface candidate producer suite independently
+        working-directory: interface39
+        run: npm test
