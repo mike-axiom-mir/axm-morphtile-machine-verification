@@ -1,0 +1,63 @@
+name: current growth round 27
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round27:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 92757ca5ff9790e85537c07e7c8e4a27b54cebae
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 04491c0eabf9333990bc7ae541b1f3a77139fb12
+          path: form-pr38
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify Form PR 38 repeat linear finite-domain convergence
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round27.test.js 2>&1 | tee round27.log
+        env:
+          R27_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R27_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R27_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R27_FORM_BASE_COMMIT: 92757ca5ff9790e85537c07e7c8e4a27b54cebae
+          R27_FORM38_ROOT: ${{ github.workspace }}/form-pr38
+          R27_FORM38_COMMIT: 04491c0eabf9333990bc7ae541b1f3a77139fb12
+      - name: Replay exact Form PR 38 suite standalone
+        working-directory: form-pr38
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee ../verification/round27-form-suite.log
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 27 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round27-logs
+          path: |
+            verification/round27.log
+            verification/round27-form-suite.log
+          if-no-files-found: error
