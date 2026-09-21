@@ -102,7 +102,7 @@ test("Assembly PR #39 closes READY-as-plan overclaim while preserving portable k
   const noApply = HeadKit.materializeKit(headPositive, noApplyRuntime, { name: "missing apply contract" });
   const noApplyHold = firstHold(noApply);
   assert.equal(noApplyHold.code, "HOLD_MORPHTILE_RUNTIME_CONTRACT_MISSING");
-  assert.ok(noApplyHold.missing.includes("applyStructOp"));
+  assert.ok(Array.isArray(noApplyHold.missing_functions) && noApplyHold.missing_functions.includes("applyStructOp"));
 
   const calls = [];
   const secondOperationRejectRuntime = {
