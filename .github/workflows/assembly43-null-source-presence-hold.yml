@@ -1,0 +1,46 @@
+name: assembly 43 authored-null warning source HOLD
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  assembly43-null-source-presence-hold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: b927da470b6ee92a9ce64c2f5697896dd4e8180c
+          path: assembly43
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reproduce authored-null warning-source ambiguity
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/assembly43-null-source-presence-regression.test.js 2>&1 | tee assembly43-null-source-presence.log
+        env:
+          A43_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          A43_ASSEMBLY_BASE_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          A43_ASSEMBLY43_ROOT: ${{ github.workspace }}/assembly43
+          A43_ASSEMBLY43_COMMIT: b927da470b6ee92a9ce64c2f5697896dd4e8180c
+      - name: Preserve Assembly 43 HOLD log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembly43-null-source-presence-hold-log
+          path: verification/assembly43-null-source-presence.log
+          if-no-files-found: error
