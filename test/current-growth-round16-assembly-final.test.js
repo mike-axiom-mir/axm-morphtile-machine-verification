@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 
 const ASSEMBLY_PR29_FINAL = "ff718341b7b69b23e117d9fb95e2a216a21f7b55";
+const hasAssemblyFinal = !!process.env.R16_ASSEMBLY_FINAL_ROOT && !!process.env.R16_ASSEMBLY_FINAL_COMMIT;
 
 function minimalTileCandidate(id) {
   return {
@@ -18,7 +19,7 @@ function minimalTileCandidate(id) {
   };
 }
 
-test("Assembly PR #29 final exact head: result provenance presence repair passes while source trace falsey loss remains explicit HOLD", () => {
+test("Assembly PR #29 final exact head: result provenance presence repair passes while source trace falsey loss remains explicit HOLD", { skip: !hasAssemblyFinal }, () => {
   assert.equal(process.env.R16_ASSEMBLY_FINAL_COMMIT, ASSEMBLY_PR29_FINAL);
   const Assembly = require(path.join(process.env.R16_ASSEMBLY_FINAL_ROOT, "src"));
 
