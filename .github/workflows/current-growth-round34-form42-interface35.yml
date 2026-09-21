@@ -1,0 +1,88 @@
+name: current growth round 34 form42 interface35
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round34-form42-interface35:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: fa91b691c40cf418be1d17aa0baa323e38800333
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 7ed9acc65a362bb40d4e055a68928f02dd6ce3af
+          path: form-pr42
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 3ca0fece5e6c2905629da0c29e87eaf657bc10d4
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 699a2db2691aae5814f5712ff59ccc3296d99c19
+          path: interface-pr35
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 8a2a7bf6adf40266438945ad1482001be9d68900
+          path: assembly-current
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact Form 42 and Interface 35 candidates
+        working-directory: verification
+        run: |
+          set -o pipefail
+          node --test test/current-growth-round34-form42-interface35.test.js 2>&1 | tee round34-form42-interface35.log
+        env:
+          R34_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R34_FORM_BASE_COMMIT: fa91b691c40cf418be1d17aa0baa323e38800333
+          R34_FORM42_ROOT: ${{ github.workspace }}/form-pr42
+          R34_FORM42_COMMIT: 7ed9acc65a362bb40d4e055a68928f02dd6ce3af
+          R34_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R34_INTERFACE_BASE_COMMIT: 3ca0fece5e6c2905629da0c29e87eaf657bc10d4
+          R34_INTERFACE35_ROOT: ${{ github.workspace }}/interface-pr35
+          R34_INTERFACE35_COMMIT: 699a2db2691aae5814f5712ff59ccc3296d99c19
+          R34_ASSEMBLY_CURRENT_COMMIT: 8a2a7bf6adf40266438945ad1482001be9d68900
+          R34_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R34_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently replay Interface receiver suite after lifecycle-only candidate
+        working-directory: interface-pr35
+        run: |
+          set -o pipefail
+          node --test test/assembly-dependency.integration.test.js 2>&1 | tee ../verification/round34-interface-receiver.log
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly-current/src
+          MORPHTILE_ASSEMBLY_COMMIT: 8a2a7bf6adf40266438945ad1482001be9d68900
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+      - name: Preserve round 34 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round34-form42-interface35-logs
+          path: |
+            verification/round34-form42-interface35.log
+            verification/round34-interface-receiver.log
+          if-no-files-found: error
