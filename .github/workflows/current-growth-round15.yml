@@ -1,0 +1,65 @@
+name: current growth round 15
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  current-growth-round15:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: core
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: e2c89b87ddf7b2b4c9b0db2239e8880a3a873553
+          path: form-pr27
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 184ee30b9045dc76d7307fba078c37f5f44999fd
+          path: surface-pr26
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 78754081fa84fd995610175ba13e3d78bb886da4
+          path: interface-pr22
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 05e4336c3ba98f6bb581541d306ffa60d17439ff
+          path: assembly-pr28
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify current round 15 boundaries
+        working-directory: verification
+        run: set -o pipefail; node --test test/current-growth-round15.test.js 2>&1 | tee round15.log
+        env:
+          R15_CORE_PATH: ${{ github.workspace }}/core/core/morphtile.js
+          R15_CORE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          R15_FORM_ROOT: ${{ github.workspace }}/form-pr27
+          R15_FORM_COMMIT: e2c89b87ddf7b2b4c9b0db2239e8880a3a873553
+          R15_SURFACE_ROOT: ${{ github.workspace }}/surface-pr26
+          R15_SURFACE_COMMIT: 184ee30b9045dc76d7307fba078c37f5f44999fd
+          R15_INTERFACE_ROOT: ${{ github.workspace }}/interface-pr22
+          R15_INTERFACE_COMMIT: 78754081fa84fd995610175ba13e3d78bb886da4
+          R15_ASSEMBLY_ROOT: ${{ github.workspace }}/assembly-pr28
+          R15_ASSEMBLY_COMMIT: 05e4336c3ba98f6bb581541d306ffa60d17439ff
+      - name: Preserve round 15 log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-growth-round15-log
+          path: verification/round15.log
+          if-no-files-found: error
