@@ -1,0 +1,68 @@
+name: interface 39 repaired evidence guard verification
+
+on:
+  push:
+    branches:
+      - verification/interface39-evidence-guard-hold
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface39:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+      - name: Checkout Interface integrated base
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ec92507b82d855de49ba024ecfdd32aada24b186
+          path: interface-base
+      - name: Checkout Interface 39 repaired exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 00f70546da3b4f569f4ce7b161e8935442ed819a
+          path: interface39
+      - name: Checkout pinned Assembly receiver
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: c45f8305196d149362045cef339ff1634f9095fe
+          path: assembly
+      - name: Checkout pinned MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent structured/executable evidence attack
+        working-directory: verification
+        env:
+          I39_BASE_ROOT: ${{ github.workspace }}/interface-base
+          I39_BASE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          I39_ROOT: ${{ github.workspace }}/interface39
+          I39_COMMIT: 00f70546da3b4f569f4ce7b161e8935442ed819a
+          I39_ASSEMBLY_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          I39_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/interface39-evidence-guard-regression.test.js
+      - name: Replay candidate full unit suite independently
+        working-directory: interface39
+        run: npm test
+      - name: Replay exact pinned Assembly receiver suite independently
+        working-directory: interface39
+        env:
+          MORPHTILE_ASSEMBLY: ../assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: c45f8305196d149362045cef339ff1634f9095fe
+          MORPHTILE_CORE: ../morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm run test:integration:assembly
