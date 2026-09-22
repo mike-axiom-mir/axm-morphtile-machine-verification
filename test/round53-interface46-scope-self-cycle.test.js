@@ -83,7 +83,7 @@ test("nested bare-id composition fails closed through nested layout while valid 
   ));
   assert.equal(escaped.status, "HOLD");
   assert.equal(escaped.holds[0].code, "HOLD_INTERFACE_TILE_SCOPE");
-  assert.equal(escaped.candidate, undefined, "scope rejection must not leak a candidate operation");
+  assert.equal(escaped.candidate, null, "scope rejection must not leak a candidate operation");
 
   const local = run(request("top-level-local-id-control", "mt_core", [{ kind: "tile", tile_id: "mt_tower" }]));
   assert.equal(local.status, "CANDIDATE", JSON.stringify(local.holds));
