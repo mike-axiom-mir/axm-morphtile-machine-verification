@@ -1,0 +1,204 @@
+name: round 60 Interface48 readout label
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface48:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 57b842771190c49cc13155d6f5c0a69bcc05d882
+          fetch-depth: 0
+          path: interface48
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 685df074701feeae3e9d789e532d0a3658030bf4
+          path: morphtile
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 03206629321a023c046c7ee900a926bb6698f154
+          path: assembly-pinned
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 690f15a65398bf34b8f1ddd2d6a8eca5f40aecfe
+          fetch-depth: 0
+          path: assembly-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Independently attack Interface 48 readout lexical labels
+        env:
+          INTERFACE_BASE: 25dcb936e09bd440816d158b55151c879d5a558d
+          INTERFACE_HEAD: 57b842771190c49cc13155d6f5c0a69bcc05d882
+          INTERFACE_ROOT: ${{ github.workspace }}/interface48
+          MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          ASSEMBLY_PINNED_ROOT: ${{ github.workspace }}/assembly-pinned
+          ASSEMBLY_CURRENT_ROOT: ${{ github.workspace }}/assembly-current
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const git = (root, args, options = {}) => execFileSync('git', args, { cwd: root, encoding: 'utf8', ...options }).trim();
+          const interfaceRoot = process.env.INTERFACE_ROOT;
+          const coreRoot = process.env.MORPHTILE_ROOT;
+          const pinnedAssemblyRoot = process.env.ASSEMBLY_PINNED_ROOT;
+          const currentAssemblyRoot = process.env.ASSEMBLY_CURRENT_ROOT;
+
+          assert.equal(git(interfaceRoot, ['rev-parse', 'HEAD']), process.env.INTERFACE_HEAD);
+          assert.equal(git(coreRoot, ['rev-parse', 'HEAD']), '685df074701feeae3e9d789e532d0a3658030bf4');
+          assert.equal(git(pinnedAssemblyRoot, ['rev-parse', 'HEAD']), '03206629321a023c046c7ee900a926bb6698f154');
+          assert.equal(git(currentAssemblyRoot, ['rev-parse', 'HEAD']), '690f15a65398bf34b8f1ddd2d6a8eca5f40aecfe');
+          execFileSync('git', ['merge-base', '--is-ancestor', '03206629321a023c046c7ee900a926bb6698f154', '690f15a65398bf34b8f1ddd2d6a8eca5f40aecfe'], { cwd: currentAssemblyRoot });
+
+          const changed = git(interfaceRoot, ['diff', '--name-only', process.env.INTERFACE_BASE, process.env.INTERFACE_HEAD]).split('\n').filter(Boolean).sort();
+          const expectedChanged = [
+            'README.md', 'ROADMAP.md', 'STATUS.md', 'machine.json', 'package.json', 'src/index.js', 'src/interface-intent.js',
+            'test/interface-intent.test.js', 'test/nested-layout.test.js', 'test/ordered-elements.test.js',
+            'test/repeat-local-presentation.integration.test.js', 'test/repeat-local-presentation.test.js'
+          ].sort();
+          assert.deepEqual(changed, expectedChanged, 'Interface #48 exact-head scope drifted');
+
+          const manifest = require(path.join(interfaceRoot, 'machine.json'));
+          const receiver = require(path.join(interfaceRoot, 'fixtures/integration-sources.json'));
+          assert.equal(manifest.version, '0.5.16');
+          assert.equal(manifest.tested_against.commit, '685df074701feeae3e9d789e532d0a3658030bf4');
+          assert.equal(receiver.assembly.commit, '03206629321a023c046c7ee900a926bb6698f154');
+
+          const { run } = require(path.join(interfaceRoot, 'src'));
+          const MT = require(path.join(coreRoot, 'core/morphtile.js'));
+          const request = {
+            envelope_version: '0.1',
+            request_id: 'verification-interface48-readout-nearest-scope',
+            goal: 'Attack repeat-local readout labels without creating readout authority or canonical repeat-local dependencies',
+            intent: {
+              tile_path: 'mt_tower',
+              title: 'Nested repeated readouts',
+              elements: [{
+                kind: 'repeat', binding: 'beacon', step: 0.25, max: 4,
+                children: [
+                  { kind: 'readout', binding: 'beacon', repeat_label: { source: 'index', prefix: 'outer readout ' } },
+                  {
+                    kind: 'repeat', binding: 'beacon', step: 0.5, max: 2,
+                    children: [
+                      { kind: 'readout', binding: 'beacon', repeat_label: { source: 'count', prefix: 'inner total ' } }
+                    ]
+                  }
+                ]
+              }],
+              bindings: { readouts: ['beacon'] }
+            },
+            provenance: { caller: 'verification-round60' }
+          };
+          const original = structuredClone(request);
+          const first = run(request);
+          assert.deepEqual(request, original, 'Interface producer mutated caller intent');
+          const second = run(structuredClone(original));
+          assert.deepEqual(first, second, 'Interface #48 replay drifted');
+          assert.equal(first.status, 'CANDIDATE');
+          assert.deepEqual(first.dependencies[0].requires.readout_logic_vars, ['beacon']);
+          assert.deepEqual(first.dependencies[0].requires.action_input_signal_socket_ids, []);
+          assert.deepEqual(first.dependencies[0].requires.control_param_ids, []);
+          assert.ok(!JSON.stringify(first.dependencies).includes('i_of') && !JSON.stringify(first.dependencies).includes('"i"'), 'lexical locals must not become canonical proof dependencies');
+
+          const operationJson = JSON.stringify(first.candidate.operation);
+          assert.ok(operationJson.includes('outer readout '));
+          assert.ok(operationJson.includes('inner total '));
+          const readoutValues = [];
+          const visit = (value) => {
+            if (!value || typeof value !== 'object') return;
+            if (!Array.isArray(value) && Object.prototype.hasOwnProperty.call(value, 'value') && Object.prototype.hasOwnProperty.call(value, 'label')) {
+              readoutValues.push(value.value);
+            }
+            for (const child of Object.values(value)) visit(child);
+          };
+          visit(first.candidate.operation.view);
+          assert.deepEqual([...new Set(readoutValues)], ['beacon'], 'every authored readout must remain a view over the one canonical beacon variable');
+
+          const invalidIntents = [
+            {
+              tile_path: 'mt_tower',
+              elements: [{ kind: 'readout', binding: 'beacon', repeat_label: { source: 'index' } }],
+              bindings: { readouts: ['beacon'] },
+              expected: 'HOLD_INTERFACE_REPEAT_SCOPE'
+            },
+            {
+              tile_path: 'mt_tower',
+              elements: [{ kind: 'repeat', binding: 'beacon', step: 0.5, max: 2, children: [{ kind: 'readout', binding: 'beacon', label: 'static', repeat_label: { source: 'index' } }] }],
+              bindings: { readouts: ['beacon'] }
+            },
+            {
+              tile_path: 'mt_tower',
+              elements: [{ kind: 'repeat', binding: 'beacon', step: 0.5, max: 2, children: [{ kind: 'readout', binding: 'beacon', repeat_label: { source: 'position' } }] }],
+              bindings: { readouts: ['beacon'] }
+            },
+            {
+              tile_path: 'mt_tower',
+              elements: [{ kind: 'repeat', binding: 'beacon', step: 0.5, max: 2, children: [{ kind: 'readout', binding: 'beacon', repeat_label: { source: 'index', expression: ['var', 'i'] } }] }],
+              bindings: { readouts: ['beacon'] }
+            }
+          ];
+          for (let index = 0; index < invalidIntents.length; index++) {
+            const { expected, ...intent } = invalidIntents[index];
+            const out = run({ envelope_version: '0.1', request_id: `verification-interface48-invalid-${index}`, goal: 'fail closed', intent, provenance: { caller: 'verification-round60' } });
+            assert.equal(out.status, 'HOLD');
+            assert.equal(out.candidate, null);
+            if (expected) assert.equal(out.holds[0].code, expected);
+          }
+
+          const ws = MT.createWorkspace(MT.seedWorld());
+          const before = MT.structHash(ws.live);
+          const candidate = MT.cloneBody(ws, 'ai', 'ai:verification-interface48');
+          const edited = MT.editCandidate(ws, candidate, first.candidate.operation);
+          assert.ok(edited.ok, edited.error);
+          const plan = MT.planMerge(ws, [candidate]);
+          assert.equal(plan.status, 'READY');
+          const committed = MT.commitPlan(ws, plan.id);
+          assert.ok(committed.ok);
+
+          MT.act(ws, { do: 'signal', tile: 'mt_tower', name: 'toggle' });
+          assert.equal(MT.readVars(ws.live, 'mt_tower', 0).beacon, 1);
+          const onHash = MT.structHash(ws.live);
+          const html = MT.vnodeToHTML(MT.compilePanel(ws.live).root);
+          for (let i = 0; i < 4; i++) {
+            assert.equal((html.match(new RegExp(`outer readout ${i}`, 'g')) || []).length, 1, `outer readout ${i} must bind outer nearest scope exactly once`);
+          }
+          assert.equal((html.match(/inner total 2/g) || []).length, 8, 'nested readout count label must bind the nearest inner repeat count');
+          assert.doesNotMatch(html, /outer readout 4/, 'outer lexical index must remain bounded by the nearest repeat');
+          assert.equal(MT.structHash(ws.live), onHash, 'rendering repeat-local readout labels mutated canonical structure');
+          assert.equal(MT.readVars(ws.live, 'mt_tower', 0).beacon, 1, 'readout rendering must not mutate its canonical variable');
+
+          MT.act(ws, { do: 'signal', tile: 'mt_tower', name: 'toggle' });
+          assert.equal(MT.readVars(ws.live, 'mt_tower', 0).beacon, 0);
+          const rollback = MT.rollback(ws, committed.receipt.rollback_token);
+          assert.ok(rollback.ok && rollback.exact);
+          assert.equal(MT.structHash(ws.live), before, 'Interface installation rollback must be exact');
+          NODE
+      - name: Replay Interface unit suite
+        working-directory: interface48
+        run: npm test
+      - name: Replay Interface MorphTile integration suite
+        working-directory: interface48
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm run test:integration
+      - name: Replay pinned Assembly receiver suite
+        working-directory: interface48
+        env:
+          MORPHTILE_ASSEMBLY: ${{ github.workspace }}/assembly-pinned/src
+          MORPHTILE_ASSEMBLY_COMMIT: 03206629321a023c046c7ee900a926bb6698f154
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm run test:integration:assembly
