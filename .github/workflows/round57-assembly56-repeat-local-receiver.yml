@@ -1,0 +1,150 @@
+name: round 57 Assembly56 repeat-local receiver
+
+# New branch workflows written through the connector were not receiving a push run.
+# pull_request gives the existing open PR a synchronize event path while preserving the exact pinned verifier semantics.
+on:
+  push:
+    branches:
+      - verification/round57-assembly56-repeat-local-receiver
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly56:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 0995627f6be71ce4da8b8d2f278b5c2999f0cbce
+          fetch-depth: 0
+          path: assembly56
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 25dcb936e09bd440816d158b55151c879d5a558d
+          path: interface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent exact-head receiver attack
+        env:
+          ROOT: ${{ github.workspace }}
+          ASSEMBLY_BASE: c6754936ebb1b005d99371890d7ef46e3917389f
+          ASSEMBLY_HEAD: 0995627f6be71ce4da8b8d2f278b5c2999f0cbce
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const root = process.env.ROOT;
+          const assembly = path.join(root, 'assembly56');
+          const git = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+          assert.equal(git(assembly, ['rev-parse','HEAD']), process.env.ASSEMBLY_HEAD);
+          const changed = git(assembly, ['diff','--name-only', process.env.ASSEMBLY_BASE, process.env.ASSEMBLY_HEAD]).split('\n').filter(Boolean);
+          assert.deepEqual(changed, ['test/current-interface-repeat-local-receiver.integration.test.js'], 'Assembly #56 must remain receiver-evidence-only');
+
+          const expected = {
+            form: 'ef6a09e4d662d960e015f61d7991c58d33f5c6d1',
+            surface: '4e4495182aa83e5dfba37722fc3756a70cfaafaa',
+            capability: 'edc07af182ee26ca1ceb64b5d5205591ec6aca9d',
+            interface: '25dcb936e09bd440816d158b55151c879d5a558d',
+            core: '34eddb9df6450a7da0da20dd596fd2b388bbb788'
+          };
+          for (const [dir, sha] of Object.entries({ form: expected.form, surface: expected.surface, capability: expected.capability, interface: expected.interface, morphtile: expected.core })) {
+            assert.equal(git(path.join(root, dir), ['rev-parse','HEAD']), sha, `${dir} exact checkout drift`);
+          }
+          const fleet = require(path.join(assembly, 'fixtures/current-fleet.json'));
+          assert.deepEqual(fleet, { schema: 'axm.morphtile.assembly-current-fleet/v1', ...expected });
+
+          const Capability = require(path.join(root, 'capability', 'src'));
+          const Interface = require(path.join(root, 'interface', 'src'));
+          const Assembly = require(path.join(assembly, 'src'));
+          const { materializeKit } = require(path.join(assembly, 'src', 'kit'));
+          const MT = require(path.join(root, 'morphtile', 'core', 'morphtile.js'));
+          const id = 'mt_verify_repeat_local_receiver';
+          const req = (request_id, goal, intent) => ({ envelope_version: '0.1', request_id, goal, intent, provenance: { caller: 'verification-round57' } });
+          const base = { candidate: { schema: 'morphtile.tile-spec/v0.4', id, name: 'Verification repeat receiver', form_hints: ['ui_panel'], facets: {} }, provenance: { caller: 'verification-round57-base' } };
+
+          const capability = Capability.run(req('cap', 'Provide canonical count and increment authority', { kind: 'counter', initial: 3 }));
+          const interfaceOut = Interface.run(req('ui', 'Author repeat-local presentation over one canonical action', {
+            tile_path: id,
+            title: 'Verification repeat receiver',
+            elements: [{ kind: 'repeat', binding: 'count', step: 1, max: 4, children: [
+              { kind: 'repeat_text', source: 'index', prefix: 'slot ' },
+              { kind: 'action', binding: 'increment', repeat_label: { source: 'index', prefix: 'increment ' } }
+            ] }],
+            bindings: { readouts: ['count'], actions: ['increment'], controls: [] }
+          }));
+          assert.equal(capability.status, 'CANDIDATE');
+          assert.equal(interfaceOut.status, 'CANDIDATE');
+          assert.deepEqual(interfaceOut.dependencies[0].requires.readout_logic_vars, ['count']);
+          assert.deepEqual(interfaceOut.dependencies[0].requires.action_input_signal_socket_ids, ['increment']);
+
+          const assembled = Assembly.run({ envelope_version: '0.1', request_id: 'assembly', goal: 'Transport repeat-local presentation without multiplying authority', intent: { id, name: 'Verification repeat receiver' }, inputs: [base, capability, interfaceOut], provenance: { caller: 'verification-round57' } });
+          assert.equal(assembled.status, 'CANDIDATE', JSON.stringify(assembled.holds));
+          assert.deepEqual(assembled.candidate.view, interfaceOut.candidate.operation.view, 'Assembly must retain Interface descriptors verbatim');
+          assert.equal(assembled.candidate.facets.connect.sockets.filter(s => s.id === 'increment' && s.kind === 'signal' && s.dir === 'in').length, 1, 'repeat views must not clone canonical signal authority');
+
+          const portable = materializeKit(assembled, MT, { name: 'Verification repeat-local kit' });
+          assert.equal(portable.status, 'CANDIDATE', JSON.stringify(portable.holds));
+          assert.equal(portable.dependency_resolution.length, 1);
+          assert.equal(portable.dependency_resolution[0].status, 'SATISFIED');
+          assert.deepEqual(portable.kit.tile.view, interfaceOut.candidate.operation.view);
+
+          const serialized = JSON.stringify(portable.kit);
+          const receiver = MT.createWorld('Verification fresh receiver');
+          const imported = MT.importKit(receiver, JSON.parse(serialized));
+          assert.equal(imported.status, 'READY', JSON.stringify(imported));
+          for (const op of imported.ops || []) MT.applyStructOp(receiver, op);
+          const received = MT.resolveTile(receiver, id);
+          assert.ok(received);
+          assert.deepEqual(received.view, interfaceOut.candidate.operation.view, 'JSON kit transport must not reinterpret lexical presentation matter');
+          assert.equal(received.facets.connect.sockets.filter(s => s.id === 'increment' && s.kind === 'signal' && s.dir === 'in').length, 1);
+
+          const before = MT.structHash(receiver);
+          const html = MT.vnodeToHTML(MT.compilePanel(receiver).root);
+          for (let i = 0; i < 3; i += 1) {
+            assert.match(html, new RegExp(`slot ${i}`));
+            assert.match(html, new RegExp(`increment ${i}`));
+          }
+          assert.equal((html.match(new RegExp(`data-signal=\\"${id}:increment\\"`, 'g')) || []).length, 3, 'three repeated controls must all point to one canonical increment signal');
+          assert.equal(MT.structHash(receiver), before, 'receiver render must be structurally read-only');
+          NODE
+      - name: Replay exact Assembly producer suite
+        working-directory: assembly56
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface/src
+          CURRENT_INTERFACE_COMMIT: 25dcb936e09bd440816d158b55151c879d5a558d
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+        run: npm test
