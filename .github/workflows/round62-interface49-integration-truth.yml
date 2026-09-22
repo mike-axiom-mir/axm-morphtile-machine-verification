@@ -1,0 +1,100 @@
+name: round 62 Interface49 integration truth
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface49:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'verification/round62-interface49-integration-truth'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: a343336f91af9b6f6af491e0d8e1b0bcc0eb40a5
+          fetch-depth: 0
+          path: interface49
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 685df074701feeae3e9d789e532d0a3658030bf4
+          path: morphtile
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 03206629321a023c046c7ee900a926bb6698f154
+          path: assembly
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Independently verify Interface49 truth-surface provenance
+        env:
+          INTERFACE_ROOT: ${{ github.workspace }}/interface49
+          CORE_ROOT: ${{ github.workspace }}/morphtile
+          ASSEMBLY_ROOT: ${{ github.workspace }}/assembly
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const roots = { interface: process.env.INTERFACE_ROOT, core: process.env.CORE_ROOT, assembly: process.env.ASSEMBLY_ROOT };
+          const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+          const producer = 'a343336f91af9b6f6af491e0d8e1b0bcc0eb40a5';
+          const base = '38801484b9788d57afdb812df4eb6f17d22d7a00';
+          const core = '685df074701feeae3e9d789e532d0a3658030bf4';
+          const assembly = '03206629321a023c046c7ee900a926bb6698f154';
+          assert.equal(git(roots.interface, ['rev-parse','HEAD']), producer);
+          assert.equal(git(roots.core, ['rev-parse','HEAD']), core);
+          assert.equal(git(roots.assembly, ['rev-parse','HEAD']), assembly);
+
+          const changed = git(roots.interface, ['diff','--name-only',base,producer]).split('\n').filter(Boolean).sort();
+          assert.deepEqual(changed, ['INTEGRATION.md','test/integration-evidence-identity.test.js']);
+          assert.ok(!changed.some(p => p.startsWith('src/') || p === 'machine.json' || p.startsWith('fixtures/') || p.startsWith('.github/') || p === 'package.json'));
+
+          const machine = JSON.parse(fs.readFileSync(path.join(roots.interface,'machine.json'),'utf8'));
+          const sources = JSON.parse(fs.readFileSync(path.join(roots.interface,'fixtures/integration-sources.json'),'utf8'));
+          assert.equal(machine.version, '0.5.16');
+          assert.equal(machine.envelope, '0.1');
+          assert.deepEqual(machine.tested_against, { repository: 'mike-axiom-mir/axm-morphtile', commit: core, format: 'v0.4' });
+          assert.deepEqual(sources.assembly, { repository: 'mike-axiom-mir/axm-morphtile-machine-assembly', commit: assembly });
+
+          const current = fs.readFileSync(path.join(roots.interface,'INTEGRATION.md'),'utf8');
+          const previous = git(roots.interface, ['show', `${base}:INTEGRATION.md`]);
+          assert.match(previous, /commit: 63a65c70bb702cb9ac979ec04233ffaa7ed5d179/);
+          assert.match(previous, /machine version: 0\.5\.3/);
+          assert.match(previous, /08836233457d90b571063a8342434c572b87cd5e/);
+          assert.match(current, new RegExp(`- repository: ${machine.tested_against.repository}`));
+          assert.match(current, new RegExp(`- commit: ${core}`));
+          assert.match(current, /- format: v0\.4/);
+          assert.match(current, /- provisional envelope: v0\.1/);
+          assert.match(current, /- machine version: 0\.5\.16/);
+          assert.ok(current.includes(`Assembly receiver compatibility is separately pinned to \`${assembly}\` in CI.`));
+          assert.doesNotMatch(current, /commit: 63a65c70bb702cb9ac979ec04233ffaa7ed5d179/);
+          assert.doesNotMatch(current, /machine version: 0\.5\.3/);
+          assert.doesNotMatch(current, /08836233457d90b571063a8342434c572b87cd5e/);
+          const compatibility = current.split('\n').find(line => line.startsWith('Assembly receiver compatibility is separately pinned')) || '';
+          assert.doesNotMatch(compatibility, /latest|current main/i, 'exact receiver evidence must not become a floating compatibility claim');
+          NODE
+      - name: Replay Interface49 unit suite
+        working-directory: interface49
+        run: npm test
+      - name: Replay Interface49 MorphTile integration
+        working-directory: interface49
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm run test:integration
+      - name: Replay Interface49 pinned Assembly receiver integration
+        working-directory: interface49
+        env:
+          MORPHTILE_ASSEMBLY: ${{ github.workspace }}/assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: 03206629321a023c046c7ee900a926bb6698f154
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm run test:integration:assembly
