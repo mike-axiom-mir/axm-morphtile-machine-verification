@@ -1,5 +1,7 @@
 name: round 57 Assembly56 repeat-local receiver
 
+# Branch-local activation nudge: the introducing commit did not schedule this new workflow,
+# so this second push changes no verifier semantics and gives GitHub an existing branch workflow to trigger.
 on:
   push:
     branches:
