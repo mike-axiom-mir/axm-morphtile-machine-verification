@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 
 const ASSEMBLY_BASE = "778bd4f46d9675bbbc991ba98a0bddf85a92c6b3";
-const ASSEMBLY46 = "3c31efbdbc3875a53bf798ad2ffea5473547de38";
+const ASSEMBLY46 = "1288a9b01c4e4930926d9219e1d41d5726bd691b";
 const FORM = "416326bcafec510dc16cd3712677461d45ca8b6c";
 const MORPHTILE = "2bdf8eade1376055473b9cc1b11734b72a5566e5";
 
