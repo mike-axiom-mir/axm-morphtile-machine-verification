@@ -1,0 +1,65 @@
+name: round 58 Core19 readout scope
+
+on:
+  push:
+    branches:
+      - verification/round58-core19-readout-scope
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-core19:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: ad830fefb77fa45029a76f6a89af73e3d80b9cbc
+          fetch-depth: 0
+          path: core19
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact bounded Core19 diff and readout authority
+        working-directory: core19
+        env:
+          CORE19_BASE: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const cp = require('child_process');
+          const base = process.env.CORE19_BASE;
+          const files = cp.execFileSync('git', ['diff', '--name-only', base + '..HEAD'], { encoding: 'utf8' }).trim().split(/\r?\n/).filter(Boolean).sort();
+          const expected = ['core/morphtile.js', 'package.json', 'test/repeat-readout-labels.js'].sort();
+          if (JSON.stringify(files) !== JSON.stringify(expected)) throw new Error('unexpected Core19 scope: ' + JSON.stringify(files));
+          const numstat = cp.execFileSync('git', ['diff', '--numstat', base + '..HEAD', '--', 'core/morphtile.js'], { encoding: 'utf8' }).trim();
+          if (numstat !== '1\t1\tcore/morphtile.js') throw new Error('runtime mutation must stay exactly 1 add / 1 delete: ' + JSON.stringify(numstat));
+          const src = fs.readFileSync('core/morphtile.js', 'utf8');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const regression = fs.readFileSync('test/repeat-readout-labels.js', 'utf8');
+          if (!src.includes("text: labels(n.label, n.value)")) throw new Error('readout label is not routed through scoped label evaluator');
+          if (src.includes("text: n.label || n.value")) throw new Error('legacy unscoped readout-label path remains');
+          if (!src.includes("bind: { tile: path, name: n.value }")) throw new Error('canonical readout binding changed or disappeared');
+          if (!String(pkg.scripts && pkg.scripts.test || '').includes('test/repeat-readout-labels.js')) throw new Error('readout regression is not registered in producer test suite');
+          const must = [
+            'repeat lexical scope reaches readout labels without changing readout authority',
+            'data-bind="mt_tower\\|beacon"',
+            'MT.structHash',
+            'MT.rollback',
+            'rollback.exact',
+            "['var', 'i']",
+            "['var', 'i_of']"
+          ];
+          for (const token of must) if (!regression.includes(token)) throw new Error('missing readout authority regression token: ' + token);
+          NODE
+      - name: Replay complete Core19 producer proof
+        working-directory: core19
+        run: |
+          npm test
+          npm run build
+          npm run conformance
