@@ -1,0 +1,103 @@
+name: round 50 Interface44 Assembly49
+
+on:
+  push:
+    branches:
+      - verification/round50-interface44-assembly49
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface44:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: c7f145526f56c54e5a545ad1115d2afb5170fc77
+          fetch-depth: 0
+          path: interface44
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 44 exact-head attack
+        working-directory: verification
+        env:
+          R50_INTERFACE_BASE_COMMIT: ddafc9e30144d12605c6e4198cd8d6c5764e6212
+          R50_INTERFACE44_ROOT: ${{ github.workspace }}/interface44
+          R50_INTERFACE44_COMMIT: c7f145526f56c54e5a545ad1115d2afb5170fc77
+          R50_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R50_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round50-interface44-action-control-authority.test.js
+      - name: Replay Interface 44 producer suite
+        working-directory: interface44
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-assembly49:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: fea9f0b7ba5a8c4bf6710806e636f53f6a6a72cc
+          fetch-depth: 0
+          path: assembly49
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: dd5764efdcd75bb826dd908a4d2245ad04d0a57a
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ddafc9e30144d12605c6e4198cd8d6c5764e6212
+          path: interface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Assembly 49 exact-fleet truth attack
+        working-directory: verification
+        env:
+          R50_ASSEMBLY_BASE_COMMIT: a2fb0808e53a2a849b6746d5a4d2c1c296f2cfb0
+          R50_ASSEMBLY49_ROOT: ${{ github.workspace }}/assembly49
+          R50_ASSEMBLY49_COMMIT: fea9f0b7ba5a8c4bf6710806e636f53f6a6a72cc
+          R50_FORM_MAIN_ROOT: ${{ github.workspace }}/form-main
+          R50_SURFACE_MAIN_ROOT: ${{ github.workspace }}/surface-main
+          R50_CAPABILITY_MAIN_ROOT: ${{ github.workspace }}/capability-main
+          R50_INTERFACE_MAIN_ROOT: ${{ github.workspace }}/interface-main
+          R50_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+        run: node --test test/round50-assembly49-current-fleet-truth.test.js
+      - name: Replay Assembly 49 producer suite
+        working-directory: assembly49
+        run: npm test
