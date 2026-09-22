@@ -79,8 +79,12 @@ test("round68 exact Assembly59 receipt advances only the independently integrate
     }
 
     assert.equal(git(iface, ["rev-parse", "HEAD"]), EXPECTED.interface, "Interface checkout does not match receipt");
-    const parents = git(iface, ["show", "-s", "--format=%P", "HEAD"]).split(/\s+/).filter(Boolean);
-    assert.ok(parents.includes(PREVIOUS_INTERFACE), "integrated Interface #51 merge does not directly descend from prior Interface main");
+    const rawCommit = git(iface, ["cat-file", "-p", "HEAD"]);
+    const parentLines = rawCommit.split("\n").filter((line) => line.startsWith("parent "));
+    assert.ok(
+      parentLines.includes(`parent ${PREVIOUS_INTERFACE}`),
+      "integrated Interface #51 merge commit does not name prior Interface main as a direct parent"
+    );
 
     const pins = require(path.join(assembly, "scripts/current-fleet-pins.js"));
     assert.deepEqual([...pins.LANES], ["form", "surface", "capability", "interface", "core"]);
