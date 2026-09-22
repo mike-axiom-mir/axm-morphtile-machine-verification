@@ -1,5 +1,6 @@
 name: round 58 Core19 readout scope
 
+# Activation nudge: this workflow existed in the branch parent before this exact-head push.
 on:
   push:
     branches:
