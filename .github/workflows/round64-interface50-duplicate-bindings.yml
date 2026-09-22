@@ -1,0 +1,167 @@
+name: round 64 Interface50 duplicate binding declarations
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface50:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'verification/round64-interface50-duplicate-bindings'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 7eae4077525016b297090cec975231be32ff8e3d
+          fetch-depth: 0
+          path: interface50
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 685df074701feeae3e9d789e532d0a3658030bf4
+          path: morphtile
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 03206629321a023c046c7ee900a926bb6698f154
+          path: assembly
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Independently verify Interface50 duplicate-binding boundary
+        env:
+          INTERFACE_ROOT: ${{ github.workspace }}/interface50
+          CORE_ROOT: ${{ github.workspace }}/morphtile
+          ASSEMBLY_ROOT: ${{ github.workspace }}/assembly
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const roots = {
+            interface: process.env.INTERFACE_ROOT,
+            core: process.env.CORE_ROOT,
+            assembly: process.env.ASSEMBLY_ROOT
+          };
+          const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+          const producer = '7eae4077525016b297090cec975231be32ff8e3d';
+          const base = '79739c5fae65a837e8c7a9f9a88fe76dfbab80ff';
+          const core = '685df074701feeae3e9d789e532d0a3658030bf4';
+          const assembly = '03206629321a023c046c7ee900a926bb6698f154';
+
+          assert.equal(git(roots.interface, ['rev-parse', 'HEAD']), producer);
+          assert.equal(git(roots.core, ['rev-parse', 'HEAD']), core);
+          assert.equal(git(roots.assembly, ['rev-parse', 'HEAD']), assembly);
+
+          const expectedChanged = [
+            'CHANGELOG.md',
+            'INTEGRATION.md',
+            'README.md',
+            'ROADMAP.md',
+            'STATUS.md',
+            'machine.json',
+            'package.json',
+            'src/index.js',
+            'test/interface-intent.test.js',
+            'test/nested-layout.test.js',
+            'test/ordered-elements.test.js'
+          ].sort();
+          const changed = git(roots.interface, ['diff', '--name-only', base, producer]).split('\n').filter(Boolean).sort();
+          assert.deepEqual(changed, expectedChanged);
+          assert.deepEqual(changed.filter(p => p.startsWith('src/')), ['src/index.js']);
+          assert.ok(!changed.some(p => p.startsWith('.github/') || p.startsWith('fixtures/')));
+
+          const machine = JSON.parse(fs.readFileSync(path.join(roots.interface, 'machine.json'), 'utf8'));
+          const pkg = JSON.parse(fs.readFileSync(path.join(roots.interface, 'package.json'), 'utf8'));
+          const sources = JSON.parse(fs.readFileSync(path.join(roots.interface, 'fixtures/integration-sources.json'), 'utf8'));
+          assert.equal(machine.version, '0.5.17');
+          assert.equal(pkg.version, '0.5.17');
+          assert.deepEqual(machine.tested_against, {
+            repository: 'mike-axiom-mir/axm-morphtile',
+            commit: core,
+            format: 'v0.4'
+          });
+          assert.deepEqual(sources.assembly, {
+            repository: 'mike-axiom-mir/axm-morphtile-machine-assembly',
+            commit: assembly
+          });
+
+          const previous = git(roots.interface, ['show', `${base}:src/index.js`]);
+          const current = fs.readFileSync(path.join(roots.interface, 'src/index.js'), 'utf8');
+          assert.ok(previous.includes('normalized[key] = [...new Set(list)].sort();'), 'base must exhibit silent duplicate collapse');
+          assert.ok(!current.includes('normalized[key] = [...new Set(list)].sort();'), 'candidate must remove silent duplicate collapse');
+          assert.ok(current.includes('if (unique.length !== list.length)'), 'candidate must detect declaration multiplicity');
+          assert.ok(current.includes('intent.bindings.${key} contains duplicate symbolic name'), 'candidate must report the ambiguous namespace');
+
+          const { MACHINE, run } = require(path.join(roots.interface, 'src'));
+          const fixture = JSON.parse(fs.readFileSync(path.join(roots.interface, 'fixtures/request.counter-view.json'), 'utf8'));
+          const clone = value => JSON.parse(JSON.stringify(value));
+          assert.equal(MACHINE.version, '0.5.17');
+
+          const duplicateCases = [
+            ['actions', 'increment'],
+            ['readouts', 'count']
+          ];
+          for (const [key, name] of duplicateCases) {
+            const request = clone(fixture);
+            request.request_id = `verify-interface50-duplicate-${key}`;
+            request.intent.bindings[key].push(name);
+            const out = run(request);
+            assert.equal(out.status, 'HOLD');
+            assert.equal(out.holds[0].code, 'HOLD_INVALID_INTERFACE_BINDING');
+            assert.equal(out.holds[0].detail, `intent.bindings.${key} contains duplicate symbolic name: ${name}`);
+            assert.equal(out.candidate, null);
+          }
+
+          const control = clone(fixture);
+          control.request_id = 'verify-interface50-duplicate-controls';
+          control.intent = {
+            tile_path: 'mt_counter',
+            control: 'count',
+            bindings: { controls: ['count', 'count'] }
+          };
+          const controlOut = run(control);
+          assert.equal(controlOut.status, 'HOLD');
+          assert.equal(controlOut.holds[0].code, 'HOLD_INVALID_INTERFACE_BINDING');
+          assert.equal(controlOut.holds[0].detail, 'intent.bindings.controls contains duplicate symbolic name: count');
+          assert.equal(controlOut.candidate, null);
+
+          const multiplicity = clone(fixture);
+          multiplicity.request_id = 'verify-interface50-view-multiplicity';
+          multiplicity.intent = {
+            tile_path: 'mt_counter',
+            elements: [
+              { kind: 'action', binding: 'increment', label: 'Add one' },
+              { kind: 'action', binding: 'increment', label: 'Add again' }
+            ],
+            bindings: { actions: ['increment'] }
+          };
+          const multiplicityOut = run(multiplicity);
+          assert.equal(multiplicityOut.status, 'CANDIDATE', JSON.stringify(multiplicityOut.holds));
+          assert.deepEqual(multiplicityOut.dependencies[0].requires.action_input_signal_socket_ids, ['increment']);
+          assert.equal(multiplicityOut.candidate.operation.view.body.length, 2);
+          assert.equal(multiplicityOut.candidate.operation.view.body[0].button, 'increment');
+          assert.equal(multiplicityOut.candidate.operation.view.body[1].button, 'increment');
+          NODE
+      - name: Replay Interface50 unit suite
+        working-directory: interface50
+        run: npm test
+      - name: Replay Interface50 MorphTile integration
+        working-directory: interface50
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm run test:integration
+      - name: Replay Interface50 pinned Assembly receiver integration
+        working-directory: interface50
+        env:
+          MORPHTILE_ASSEMBLY: ${{ github.workspace }}/assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: 03206629321a023c046c7ee900a926bb6698f154
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm run test:integration:assembly
