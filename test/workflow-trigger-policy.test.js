@@ -6,8 +6,14 @@ const path = require('node:path');
 const { classifyWorkflow, auditWorkflows } = require('../tools/workflow-trigger-policy');
 
 const ROOT = path.join(__dirname, '..');
-const MEASURED_MAIN_SHA = '569de6f5c224cb5afba81a9da1041d412b42bafc';
-const MEASURED_MAIN_PUSH_RUNS = 48;
+const PRE_MIGRATION_MAIN_SHA = 'ccf7e4d3e1dc52e86a9487796aefa67bcb2f5260';
+const PRE_MIGRATION_MAIN_PUSH_RUNS = 48;
+const EXPECTED_MAIN_PUSH_AUTOMATIC = 45;
+const FIRST_MIGRATION = [
+  '.github/workflows/current-growth-round9.yml',
+  '.github/workflows/current-growth-round15.yml',
+  '.github/workflows/current-growth-round19.yml',
+];
 
 test('trigger classifier distinguishes unrestricted, branch-bounded, manual and PR lanes', () => {
   assert.deepEqual(classifyWorkflow(`on:\n  push:\n  pull_request:\n`), {
@@ -32,23 +38,29 @@ test('trigger classifier distinguishes unrestricted, branch-bounded, manual and 
   });
 });
 
-test('current automatic-main inventory is frozen to the measured 48-run baseline before migration', () => {
+test('first bounded migration removes three historical automatic lanes while preserving replayability', () => {
   const receipt = auditWorkflows(ROOT);
   assert.equal(
     receipt.main_push_automatic.length,
-    MEASURED_MAIN_PUSH_RUNS,
-    `automatic main-push workflow count drifted from measured head ${MEASURED_MAIN_SHA}; ` +
-      `do not accept silent trigger growth or migration without updating the evidence boundary`,
+    EXPECTED_MAIN_PUSH_AUTOMATIC,
+    `automatic main-push workflow count must fall from measured ${PRE_MIGRATION_MAIN_PUSH_RUNS} at ${PRE_MIGRATION_MAIN_SHA} ` +
+      `to the explicit first-migration boundary ${EXPECTED_MAIN_PUSH_AUTOMATIC}; reject silent growth or unreviewed migration`,
   );
   assert.ok(
     receipt.main_push_automatic.includes('.github/workflows/test.yml'),
     'generic Verification suite must remain represented in automatic main coverage',
   );
+  for (const workflow of FIRST_MIGRATION) {
+    assert.ok(receipt.manual_replay.includes(workflow), `${workflow} must remain manually replayable`);
+    assert.ok(!receipt.main_push_automatic.includes(workflow), `${workflow} must not auto-run on main pushes after migration`);
+    assert.ok(!receipt.pull_request_automatic.includes(workflow), `${workflow} must not auto-run on unrelated PRs after migration`);
+  }
   assert.equal(new Set(receipt.main_push_automatic).size, receipt.main_push_automatic.length);
   assert.match(receipt.inventory_sha256, /^[0-9a-f]{64}$/);
   console.log('WORKFLOW_TRIGGER_POLICY_RECEIPT ' + JSON.stringify({
-    measured_main_sha: MEASURED_MAIN_SHA,
-    measured_main_push_runs: MEASURED_MAIN_PUSH_RUNS,
+    pre_migration_main_sha: PRE_MIGRATION_MAIN_SHA,
+    pre_migration_main_push_runs: PRE_MIGRATION_MAIN_PUSH_RUNS,
+    migrated_manual_only: FIRST_MIGRATION,
     current_main_push_automatic: receipt.main_push_automatic.length,
     current_pull_request_automatic: receipt.pull_request_automatic.length,
     current_manual_replay: receipt.manual_replay.length,
