@@ -1,0 +1,48 @@
+name: assembly 43 current-base warning source verification
+
+on:
+  push:
+    branches:
+      - verification/assembly43-null-source-presence-hold
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/assembly43-null-source-presence-hold.yml"
+      - "test/assembly43-null-source-presence-regression.test.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly43:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: f4d4650c4c84d4b320ad51bd4f971ac0fcadd42e
+          path: assembly43
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent current-base source-integrity attack
+        working-directory: verification
+        env:
+          A43_ASSEMBLY_BASE_ROOT: ${{ github.workspace }}/assembly-base
+          A43_ASSEMBLY_BASE_COMMIT: 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3
+          A43_ASSEMBLY43_ROOT: ${{ github.workspace }}/assembly43
+          A43_ASSEMBLY43_COMMIT: f4d4650c4c84d4b320ad51bd4f971ac0fcadd42e
+        run: node --test test/assembly43-null-source-presence-regression.test.js
+      - name: Replay exact Assembly candidate suite independently
+        working-directory: assembly43
+        run: npm test
