@@ -8,12 +8,15 @@ const { classifyWorkflow, auditWorkflows } = require('../tools/workflow-trigger-
 const ROOT = path.join(__dirname, '..');
 const PRE_MIGRATION_MAIN_SHA = 'ccf7e4d3e1dc52e86a9487796aefa67bcb2f5260';
 const PRE_MIGRATION_MAIN_PUSH_RUNS = 48;
-const EXPECTED_MAIN_PUSH_AUTOMATIC = 42;
+const EXPECTED_MAIN_PUSH_AUTOMATIC = 39;
 const MIGRATED_MANUAL_ONLY = [
   '.github/workflows/current-growth-round9.yml',
   '.github/workflows/current-growth-round10.yml',
   '.github/workflows/current-growth-round11.yml',
   '.github/workflows/current-growth-round12.yml',
+  '.github/workflows/current-growth-round13.yml',
+  '.github/workflows/current-growth-round14.yml',
+  '.github/workflows/current-growth-round14-assembly-final.yml',
   '.github/workflows/current-growth-round15.yml',
   '.github/workflows/current-growth-round19.yml',
 ];
@@ -41,7 +44,7 @@ test('trigger classifier distinguishes unrestricted, branch-bounded, manual and 
   });
 });
 
-test('bounded migration removes six historical automatic lanes while preserving replayability', () => {
+test('bounded migration removes nine historical automatic lanes while preserving replayability', () => {
   const receipt = auditWorkflows(ROOT);
   assert.equal(
     receipt.main_push_automatic.length,
