@@ -1,0 +1,114 @@
+name: round 61 Assembly58 Interface48 fleet
+
+on:
+  push:
+    branches:
+      - verification/round61-assembly58-interface48-fleet
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly58:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 2901744055fa5c09e5b8ef0f45db1606206712d7
+          fetch-depth: 0
+          path: assembly58
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 38801484b9788d57afdb812df4eb6f17d22d7a00
+          fetch-depth: 0
+          path: interface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 685df074701feeae3e9d789e532d0a3658030bf4
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Independently verify Assembly58 fleet provenance
+        env:
+          ASSEMBLY_ROOT: ${{ github.workspace }}/assembly58
+          FORM_ROOT: ${{ github.workspace }}/form
+          SURFACE_ROOT: ${{ github.workspace }}/surface
+          CAPABILITY_ROOT: ${{ github.workspace }}/capability
+          INTERFACE_ROOT: ${{ github.workspace }}/interface
+          CORE_ROOT: ${{ github.workspace }}/morphtile
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+          const roots = {
+            assembly: process.env.ASSEMBLY_ROOT,
+            form: process.env.FORM_ROOT,
+            surface: process.env.SURFACE_ROOT,
+            capability: process.env.CAPABILITY_ROOT,
+            interface: process.env.INTERFACE_ROOT,
+            core: process.env.CORE_ROOT
+          };
+          const expected = {
+            assembly: '2901744055fa5c09e5b8ef0f45db1606206712d7',
+            form: 'ef6a09e4d662d960e015f61d7991c58d33f5c6d1',
+            surface: '4e4495182aa83e5dfba37722fc3756a70cfaafaa',
+            capability: 'edc07af182ee26ca1ceb64b5d5205591ec6aca9d',
+            interface: '38801484b9788d57afdb812df4eb6f17d22d7a00',
+            core: '685df074701feeae3e9d789e532d0a3658030bf4'
+          };
+          for (const [lane, sha] of Object.entries(expected)) {
+            assert.equal(git(roots[lane], ['rev-parse', 'HEAD']), sha, `${lane} checkout drifted`);
+          }
+          const base = 'a6dba7df09abdecbf33b982271f7da7ebdf82261';
+          const changed = git(roots.assembly, ['diff', '--name-only', base, expected.assembly]).split('\n').filter(Boolean);
+          assert.deepEqual(changed, ['fixtures/current-fleet.json']);
+          const numstat = git(roots.assembly, ['diff', '--numstat', base, expected.assembly, '--', 'fixtures/current-fleet.json']);
+          assert.equal(numstat, '1\t1\tfixtures/current-fleet.json');
+          const receipt = JSON.parse(fs.readFileSync(path.join(roots.assembly, 'fixtures/current-fleet.json'), 'utf8'));
+          assert.equal(receipt.schema, 'axm.morphtile.assembly-current-fleet/v1');
+          assert.deepEqual(Object.keys(receipt).sort(), ['capability','core','form','interface','schema','surface']);
+          assert.equal(receipt.form, expected.form);
+          assert.equal(receipt.surface, expected.surface);
+          assert.equal(receipt.capability, expected.capability);
+          assert.equal(receipt.interface, expected.interface);
+          assert.equal(receipt.core, expected.core);
+          execFileSync('git', ['merge-base', '--is-ancestor', '25dcb936e09bd440816d158b55151c879d5a558d', expected.interface], { cwd: roots.interface });
+          execFileSync('git', ['merge-base', '--is-ancestor', '57b842771190c49cc13155d6f5c0a69bcc05d882', expected.interface], { cwd: roots.interface });
+          NODE
+      - name: Replay Assembly58 producer suite against exact fleet
+        working-directory: assembly58
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface/src
+          CURRENT_INTERFACE_COMMIT: 38801484b9788d57afdb812df4eb6f17d22d7a00
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+        run: npm test
