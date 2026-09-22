@@ -6,7 +6,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const ASSEMBLY_BASE = "2b080e5789074eab5829b324c360936bb1878aa0";
-const ASSEMBLY48 = "64e04f13fd98ff1a91b573b6ed17802fa35750d6";
+const ASSEMBLY48 = "3818fccc5d22363d9b49a8965b33b1ff9b4eb902";
 const enabled = Boolean(process.env.R48_ASSEMBLY48_ROOT);
 
 function git(args) {
