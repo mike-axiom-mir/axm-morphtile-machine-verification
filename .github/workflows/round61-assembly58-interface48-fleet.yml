@@ -1,4 +1,5 @@
 name: round 61 Assembly58 Interface48 fleet
+# Branch-local push below activates this already-present exact verifier.
 
 on:
   push:
