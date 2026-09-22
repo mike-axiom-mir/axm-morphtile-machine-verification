@@ -1,4 +1,5 @@
 name: round 63 Assembly58 current Interface fleet receiver
+# Trigger exact-head verifier after workflow installation.
 
 on:
   push:
