@@ -1,0 +1,93 @@
+name: round 56 Assembly55 Interface47 fleet
+
+on:
+  push:
+    branches:
+      - verification/round56-assembly55-interface47-fleet
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly55:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 1393ef5d448d1d8f41e9c19575e01d6e8aa2e741
+          fetch-depth: 0
+          path: assembly55
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 25dcb936e09bd440816d158b55151c879d5a558d
+          path: interface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify exact Assembly 55 current-fleet receipt
+        env:
+          ASSEMBLY_BASE: ca030a6eb63715645024826a001f16d30416a4bb
+          ASSEMBLY_HEAD: 1393ef5d448d1d8f41e9c19575e01d6e8aa2e741
+          ROOT: ${{ github.workspace }}
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const root = process.env.ROOT;
+          const assembly = path.join(root, 'assembly55');
+          const git = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+          assert.equal(git(assembly, ['rev-parse','HEAD']), process.env.ASSEMBLY_HEAD);
+          const changed = git(assembly, ['diff','--name-only', process.env.ASSEMBLY_BASE, process.env.ASSEMBLY_HEAD]).split('\n').filter(Boolean);
+          assert.deepEqual(changed, ['fixtures/current-fleet.json'], 'Assembly 55 must remain receipt-only');
+          const baseFleet = JSON.parse(git(assembly, ['show', `${process.env.ASSEMBLY_BASE}:fixtures/current-fleet.json`]));
+          const fleet = JSON.parse(fs.readFileSync(path.join(assembly, 'fixtures/current-fleet.json'), 'utf8'));
+          assert.equal(fleet.schema, 'axm.morphtile.assembly-current-fleet/v1');
+          const expected = {
+            form: 'ef6a09e4d662d960e015f61d7991c58d33f5c6d1',
+            surface: '4e4495182aa83e5dfba37722fc3756a70cfaafaa',
+            capability: 'edc07af182ee26ca1ceb64b5d5205591ec6aca9d',
+            interface: '25dcb936e09bd440816d158b55151c879d5a558d',
+            core: '34eddb9df6450a7da0da20dd596fd2b388bbb788'
+          };
+          for (const [lane, sha] of Object.entries(expected)) assert.equal(fleet[lane], sha, `${lane} receipt drift`);
+          assert.equal(baseFleet.form, fleet.form);
+          assert.equal(baseFleet.surface, fleet.surface);
+          assert.equal(baseFleet.capability, fleet.capability);
+          assert.equal(baseFleet.core, fleet.core);
+          assert.equal(baseFleet.interface, 'f16aaa63e8ea336ddbb3262ced3c6619c94994c5');
+          assert.notEqual(baseFleet.interface, fleet.interface);
+          for (const [dir, sha] of Object.entries({ form: expected.form, surface: expected.surface, capability: expected.capability, interface: expected.interface, morphtile: expected.core })) {
+            assert.equal(git(path.join(root, dir), ['rev-parse','HEAD']), sha, `${dir} checkout identity mismatch`);
+          }
+          NODE
+      - name: Replay Assembly unit suite
+        working-directory: assembly55
+        run: npm test
+      - name: Replay current-fleet pin emission
+        working-directory: assembly55
+        run: node scripts/current-fleet-pins.js
