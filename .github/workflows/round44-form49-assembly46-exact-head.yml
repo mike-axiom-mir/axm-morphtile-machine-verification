@@ -1,4 +1,4 @@
-name: round 44 Form49 and Assembly46 exact-head verification
+name: round 44 Form49 Assembly46 Interface40 exact-head verification
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
       - ".github/workflows/round44-form49-assembly46-exact-head.yml"
       - "test/round44-form49-position-state.test.js"
       - "test/round44-assembly46-fleet-manifest.test.js"
+      - "test/round44-interface40-shared-canonical-control.test.js"
   workflow_dispatch:
 
 permissions:
@@ -115,4 +116,40 @@ jobs:
           CURRENT_INTERFACE_COMMIT: d242b9a18625b663dd389684e1f16d614432f3c9
           CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
           CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-interface40:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: a572a27c23478b678f5051c1add8c842e1d0dd16
+          fetch-depth: 0
+          path: interface40
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 40 shared-state attack
+        working-directory: verification
+        env:
+          R44_INTERFACE40_ROOT: ${{ github.workspace }}/interface40
+          R44_INTERFACE_BASE_COMMIT: d242b9a18625b663dd389684e1f16d614432f3c9
+          R44_INTERFACE40_COMMIT: a572a27c23478b678f5051c1add8c842e1d0dd16
+          R44_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R44_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round44-interface40-shared-canonical-control.test.js
+      - name: Replay exact Interface 40 producer suite
+        working-directory: interface40
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
         run: npm test
