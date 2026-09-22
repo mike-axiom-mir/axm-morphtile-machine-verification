@@ -1,0 +1,106 @@
+name: round 54 Assembly53 current fleet
+
+on:
+  push:
+    branches:
+      - verification/round54-assembly53-current-fleet
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly53:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: b7ee5263023d9dad7f57a7933c8a1fb4df657891
+          fetch-depth: 0
+          path: assembly53
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: f16aaa63e8ea336ddbb3262ced3c6619c94994c5
+          path: interface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently verify Assembly 53 receipt scope and exact integrated identities
+        env:
+          ASSEMBLY_BASE: e4b478aed62059b83d355a011a0592ce466e81eb
+          ASSEMBLY_HEAD: b7ee5263023d9dad7f57a7933c8a1fb4df657891
+          ASSEMBLY_ROOT: ${{ github.workspace }}/assembly53
+          FORM_ROOT: ${{ github.workspace }}/form-main
+          SURFACE_ROOT: ${{ github.workspace }}/surface-main
+          CAPABILITY_ROOT: ${{ github.workspace }}/capability-main
+          INTERFACE_ROOT: ${{ github.workspace }}/interface-main
+          CORE_ROOT: ${{ github.workspace }}/morphtile
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+          const root = process.env.ASSEMBLY_ROOT;
+          assert.equal(git(root, ['rev-parse', 'HEAD']), process.env.ASSEMBLY_HEAD);
+          const changed = git(root, ['diff', '--name-only', process.env.ASSEMBLY_BASE, process.env.ASSEMBLY_HEAD]).split('\n').filter(Boolean);
+          assert.deepEqual(changed, ['fixtures/current-fleet.json'], 'receipt refresh must remain manifest-only');
+          const expected = {
+            form: 'ef6a09e4d662d960e015f61d7991c58d33f5c6d1',
+            surface: '4e4495182aa83e5dfba37722fc3756a70cfaafaa',
+            capability: 'edc07af182ee26ca1ceb64b5d5205591ec6aca9d',
+            interface: 'f16aaa63e8ea336ddbb3262ced3c6619c94994c5',
+            core: '34eddb9df6450a7da0da20dd596fd2b388bbb788'
+          };
+          const fleet = require(path.join(root, 'fixtures/current-fleet.json'));
+          assert.equal(fleet.schema, 'axm.morphtile.assembly-current-fleet/v1');
+          assert.deepEqual(Object.keys(fleet).sort(), ['schema','form','surface','capability','interface','core'].sort());
+          for (const [lane, sha] of Object.entries(expected)) assert.equal(fleet[lane], sha, `${lane}: receipt drifted`);
+          const roots = {
+            form: process.env.FORM_ROOT,
+            surface: process.env.SURFACE_ROOT,
+            capability: process.env.CAPABILITY_ROOT,
+            interface: process.env.INTERFACE_ROOT,
+            core: process.env.CORE_ROOT
+          };
+          for (const [lane, checkout] of Object.entries(roots)) assert.equal(git(checkout, ['rev-parse','HEAD']), expected[lane], `${lane}: independent checkout mismatch`);
+          const pins = require(path.join(root, 'scripts/current-fleet-pins.js'));
+          assert.deepEqual(pins.validateFleet(fleet), []);
+          assert.equal(pins.outputLines(fleet), pins.LANES.map((lane) => `${lane}=${expected[lane]}`).join('\n') + '\n');
+          NODE
+      - name: Replay Assembly producer suite against exact integrated fleet
+        working-directory: assembly53
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form-main/src
+          CURRENT_FORM_COMMIT: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface-main/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability-main/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface-main/src
+          CURRENT_INTERFACE_COMMIT: f16aaa63e8ea336ddbb3262ced3c6619c94994c5
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+        run: npm test
