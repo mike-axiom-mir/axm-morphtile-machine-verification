@@ -1,0 +1,285 @@
+name: round 55 Interface47 Assembly54
+
+on:
+  push:
+    branches:
+      - verification/round55-interface47-assembly54
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface47:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 60e3fab22b9801bee9854bab78a7ca167a78e41b
+          fetch-depth: 0
+          path: interface47
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+          path: morphtile
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 03206629321a023c046c7ee900a926bb6698f154
+          path: assembly
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently attack Interface 47 lexical scope and authority
+        env:
+          INTERFACE_BASE: f16aaa63e8ea336ddbb3262ced3c6619c94994c5
+          INTERFACE_HEAD: 60e3fab22b9801bee9854bab78a7ca167a78e41b
+          INTERFACE_ROOT: ${{ github.workspace }}/interface47
+          MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          ASSEMBLY_ROOT: ${{ github.workspace }}/assembly
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+          const root = process.env.INTERFACE_ROOT;
+          const coreRoot = process.env.MORPHTILE_ROOT;
+          const assemblyRoot = process.env.ASSEMBLY_ROOT;
+          assert.equal(git(root, ['rev-parse','HEAD']), process.env.INTERFACE_HEAD);
+          assert.equal(git(coreRoot, ['rev-parse','HEAD']), '34eddb9df6450a7da0da20dd596fd2b388bbb788');
+          assert.equal(git(assemblyRoot, ['rev-parse','HEAD']), '03206629321a023c046c7ee900a926bb6698f154');
+
+          const changed = git(root, ['diff','--name-only', process.env.INTERFACE_BASE, process.env.INTERFACE_HEAD]).split('\n').filter(Boolean).sort();
+          const expectedChanged = [
+            'README.md','ROADMAP.md','STATUS.md','fixtures/integration-sources.json','machine.json','package.json',
+            'src/index.js','src/interface-intent.js','test/integration-proof-manifest.json','test/interface-intent.test.js',
+            'test/nested-layout.test.js','test/ordered-elements.test.js','test/repeat-local-presentation.integration.test.js',
+            'test/repeat-local-presentation.test.js'
+          ].sort();
+          assert.deepEqual(changed, expectedChanged, 'Interface 47 exact-head scope drifted');
+
+          const manifest = require(path.join(root, 'machine.json'));
+          const sources = require(path.join(root, 'fixtures/integration-sources.json'));
+          assert.equal(manifest.tested_against.commit, '34eddb9df6450a7da0da20dd596fd2b388bbb788');
+          assert.equal(sources.assembly.commit, '03206629321a023c046c7ee900a926bb6698f154');
+          const proofs = require(path.join(root, 'test/integration-proof-manifest.json')).proofs;
+          const lexicalClaims = proofs.filter((entry) => entry.claim === 'repeat-local-presentation');
+          assert.equal(lexicalClaims.length, 1, 'repeat-local presentation must have one semantic proof identity');
+          assert.equal(lexicalClaims[0].path, 'test/repeat-local-presentation.integration.test.js');
+          assert.deepEqual(lexicalClaims[0].dependencies, ['morphtile']);
+
+          const { run } = require(path.join(root, 'src'));
+          const MT = require(path.join(coreRoot, 'core/morphtile.js'));
+          const request = {
+            envelope_version: '0.1',
+            request_id: 'verification-interface47-nested-lexical-scope',
+            goal: 'Attack nearest-repeat lexical presentation without multiplying action or parameter authority',
+            intent: {
+              tile_path: 'mt_tower',
+              title: 'Nested lexical authority attack',
+              elements: [{
+                kind: 'repeat', binding: 'beacon', step: 0.25, max: 4,
+                children: [
+                  { kind: 'repeat_text', source: 'index', prefix: 'outer ' },
+                  {
+                    kind: 'repeat', binding: 'beacon', step: 0.5, max: 2,
+                    children: [
+                      { kind: 'repeat_text', source: 'index', prefix: 'inner ' },
+                      { kind: 'meter', binding: 'beacon', min: 0, max: 1, repeat_label: { source: 'count', prefix: 'meter ' } },
+                      { kind: 'action', binding: 'toggle', repeat_label: { source: 'index', prefix: 'toggle ' } },
+                      { kind: 'control', binding: 'levels', repeat_label: { source: 'index', prefix: 'level ' } }
+                    ]
+                  }
+                ]
+              }],
+              bindings: { readouts: ['beacon'], actions: ['toggle'], controls: ['levels'] }
+            },
+            provenance: { caller: 'verification-round55' }
+          };
+          const original = structuredClone(request);
+          const first = run(request);
+          assert.deepEqual(request, original, 'Interface producer mutated caller intent');
+          const second = run(structuredClone(original));
+          assert.deepEqual(first, second, 'Interface exact replay drifted');
+          assert.equal(first.status, 'CANDIDATE');
+          assert.deepEqual(first.dependencies[0].requires.readout_logic_vars, ['beacon']);
+          assert.deepEqual(first.dependencies[0].requires.action_input_signal_socket_ids, ['toggle']);
+          assert.deepEqual(first.dependencies[0].requires.control_param_ids, ['levels']);
+          assert.ok(!JSON.stringify(first.dependencies).includes('i_of') && !JSON.stringify(first.dependencies).includes('"i"'), 'lexical locals must not become canonical proof dependencies');
+
+          for (const intent of [
+            { tile_path: 'mt_tower', elements: [{ kind: 'repeat_text', source: 'index' }] },
+            { tile_path: 'mt_tower', elements: [{ kind: 'action', binding: 'toggle', repeat_label: { source: 'index' } }], bindings: { actions: ['toggle'] } },
+            { tile_path: 'mt_tower', elements: [{ kind: 'repeat', binding: 'beacon', step: 1, max: 2, children: [{ kind: 'readout', binding: 'beacon', repeat_label: { source: 'index' } }] }], bindings: { readouts: ['beacon'] } },
+            { tile_path: 'mt_tower', elements: [{ kind: 'repeat', binding: 'beacon', step: 1, max: 2, children: [{ kind: 'action', binding: 'toggle', repeat_label: { source: 'index', expression: ['var','i'] } }] }], bindings: { readouts: ['beacon'], actions: ['toggle'] } }
+          ]) {
+            const out = run({ envelope_version: '0.1', request_id: 'verification-interface47-invalid', goal: 'fail closed', intent, provenance: { caller: 'verification-round55' } });
+            assert.equal(out.status, 'HOLD');
+            assert.equal(out.candidate, null);
+          }
+
+          const outside = run({ envelope_version: '0.1', request_id: 'verification-interface47-outside', goal: 'fail closed', intent: { tile_path: 'mt_tower', elements: [{ kind: 'repeat_text', source: 'index' }] }, provenance: { caller: 'verification-round55' } });
+          assert.equal(outside.holds[0].code, 'HOLD_INTERFACE_REPEAT_SCOPE');
+
+          const ws = MT.createWorkspace(MT.seedWorld());
+          const before = MT.structHash(ws.live);
+          const candidate = MT.cloneBody(ws, 'ai', 'ai:verification-interface47');
+          const edited = MT.editCandidate(ws, candidate, first.candidate.operation);
+          assert.ok(edited.ok, edited.error);
+          const plan = MT.planMerge(ws, [candidate]);
+          assert.equal(plan.status, 'READY');
+          const committed = MT.commitPlan(ws, plan.id);
+          assert.ok(committed.ok);
+          const committedHash = MT.structHash(ws.live);
+          assert.equal((MT.vnodeToHTML(MT.compilePanel(ws.live).root).match(/outer /g) || []).length, 0);
+          assert.equal(MT.structHash(ws.live), committedHash, 'cold render mutated canonical structure');
+
+          MT.act(ws, { do: 'signal', tile: 'mt_tower', name: 'toggle' });
+          assert.equal(MT.readVars(ws.live, 'mt_tower', 0).beacon, 1);
+          const onHash = MT.structHash(ws.live);
+          const html = MT.vnodeToHTML(MT.compilePanel(ws.live).root);
+          for (let i = 0; i < 4; i++) assert.equal((html.match(new RegExp(`outer ${i}`, 'g')) || []).length, 1, `outer ${i} scope count`);
+          assert.equal((html.match(/inner 0/g) || []).length, 4, 'inner index 0 must bind nearest repeat for every outer item');
+          assert.equal((html.match(/inner 1/g) || []).length, 4, 'inner index 1 must bind nearest repeat for every outer item');
+          assert.equal((html.match(/inner 2/g) || []).length, 0, 'inner scope must not leak outer index');
+          assert.equal((html.match(/meter 2/g) || []).length, 8, 'inner count must be nearest-repeat count');
+          assert.equal((html.match(/data-signal="mt_tower:toggle"/g) || []).length, 8, 'repeated labels must not multiply signal ownership');
+          assert.equal((html.match(/data-param="mt_tower:levels"/g) || []).length, 8, 'repeated labels must not multiply parameter ownership');
+          assert.equal(MT.structHash(ws.live), onHash, 'lexical rendering mutated canonical structure');
+          MT.act(ws, { do: 'signal', tile: 'mt_tower', name: 'toggle' });
+          assert.equal(MT.readVars(ws.live, 'mt_tower', 0).beacon, 0);
+          const rollback = MT.rollback(ws, committed.receipt.rollback_token);
+          assert.ok(rollback.ok && rollback.exact);
+          assert.equal(MT.structHash(ws.live), before);
+          NODE
+      - name: Replay Interface unit suite
+        working-directory: interface47
+        run: npm test
+      - name: Replay Interface MorphTile integration suite
+        working-directory: interface47
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+        run: npm run test:integration
+      - name: Replay Interface Assembly receiver suite
+        working-directory: interface47
+        env:
+          MORPHTILE_ASSEMBLY: ${{ github.workspace }}/assembly/src
+          MORPHTILE_ASSEMBLY_COMMIT: 03206629321a023c046c7ee900a926bb6698f154
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+        run: npm run test:integration:assembly
+
+  verify-assembly54:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 3f715787bbe750995c98fae131ac1b998d227cd1
+          fetch-depth: 0
+          path: assembly54
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: f16aaa63e8ea336ddbb3262ced3c6619c94994c5
+          path: interface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independently verify Assembly 54 persistent truth surface
+        env:
+          ASSEMBLY_BASE: 03206629321a023c046c7ee900a926bb6698f154
+          ASSEMBLY_HEAD: 3f715787bbe750995c98fae131ac1b998d227cd1
+          ASSEMBLY_ROOT: ${{ github.workspace }}/assembly54
+          FORM_ROOT: ${{ github.workspace }}/form-main
+          SURFACE_ROOT: ${{ github.workspace }}/surface-main
+          CAPABILITY_ROOT: ${{ github.workspace }}/capability-main
+          INTERFACE_ROOT: ${{ github.workspace }}/interface-main
+          CORE_ROOT: ${{ github.workspace }}/morphtile
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+          const root = process.env.ASSEMBLY_ROOT;
+          assert.equal(git(root, ['rev-parse','HEAD']), process.env.ASSEMBLY_HEAD);
+          const changed = git(root, ['diff','--name-only', process.env.ASSEMBLY_BASE, process.env.ASSEMBLY_HEAD]).split('\n').filter(Boolean).sort();
+          assert.deepEqual(changed, ['README.md','test/status-truth-surface-integrity.test.js'].sort(), 'Assembly 54 must remain truth-surface-only');
+
+          const baseFleet = git(root, ['show', `${process.env.ASSEMBLY_BASE}:fixtures/current-fleet.json`]);
+          const headFleet = fs.readFileSync(path.join(root, 'fixtures/current-fleet.json'), 'utf8').trim();
+          assert.equal(headFleet, baseFleet, 'Assembly 54 must not move executable fleet identity');
+          const fleet = JSON.parse(headFleet);
+          const expected = {
+            form: 'ef6a09e4d662d960e015f61d7991c58d33f5c6d1',
+            surface: '4e4495182aa83e5dfba37722fc3756a70cfaafaa',
+            capability: 'edc07af182ee26ca1ceb64b5d5205591ec6aca9d',
+            interface: 'f16aaa63e8ea336ddbb3262ced3c6619c94994c5',
+            core: '34eddb9df6450a7da0da20dd596fd2b388bbb788'
+          };
+          assert.equal(fleet.schema, 'axm.morphtile.assembly-current-fleet/v1');
+          for (const [lane, sha] of Object.entries(expected)) assert.equal(fleet[lane], sha, `${lane}: current fleet drifted`);
+          const roots = { form: process.env.FORM_ROOT, surface: process.env.SURFACE_ROOT, capability: process.env.CAPABILITY_ROOT, interface: process.env.INTERFACE_ROOT, core: process.env.CORE_ROOT };
+          for (const [lane, checkout] of Object.entries(roots)) assert.equal(git(checkout, ['rev-parse','HEAD']), expected[lane], `${lane}: live integrated checkout mismatch`);
+          const pins = require(path.join(root, 'scripts/current-fleet-pins.js'));
+          assert.deepEqual(pins.validateFleet(fleet), []);
+          assert.equal(pins.outputLines(fleet), pins.LANES.map((lane) => `${lane}=${expected[lane]}`).join('\n') + '\n');
+
+          const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+          const heading = '## Truth boundary';
+          const start = readme.indexOf(heading);
+          assert.ok(start >= 0, 'README Truth boundary is required');
+          const tail = readme.slice(start + heading.length);
+          const next = tail.search(/\n##\s+/);
+          const truth = (next >= 0 ? tail.slice(0, next) : tail).trim();
+          assert.match(truth, /fixtures\/current-fleet\.json/i);
+          assert.doesNotMatch(truth, /\b[0-9a-f]{40}\b/, 'persistent current truth must not copy moving exact identity');
+          assert.doesNotMatch(truth, /CURRENT CANDIDATE/i);
+          assert.doesNotMatch(truth, /fresh independent Verification of the current Assembly candidate/i);
+          assert.doesNotMatch(truth, /MorphTile core #\d+.*gap/i);
+          assert.doesNotMatch(truth, /\bPR #\d+\b/i, 'persistent current truth must not carry PR lifecycle state');
+          assert.doesNotMatch(truth, /\brun\s+\d{6,}\b/i, 'persistent current truth must not carry run lifecycle state');
+          assert.match(truth, /unintegrated sibling\/core candidates remain outside Assembly authority/i);
+          assert.match(truth, /presentation z-order\/layering remains HOLD/i);
+          NODE
+      - name: Replay Assembly producer suite against exact integrated fleet
+        working-directory: assembly54
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form-main/src
+          CURRENT_FORM_COMMIT: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface-main/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability-main/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface-main/src
+          CURRENT_INTERFACE_COMMIT: f16aaa63e8ea336ddbb3262ced3c6619c94994c5
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 34eddb9df6450a7da0da20dd596fd2b388bbb788
+        run: npm test
