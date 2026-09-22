@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: mike-axiom-mir/axm-morphtile-machine-assembly
-          ref: 3c31efbdbc3875a53bf798ad2ffea5473547de38
+          ref: 1288a9b01c4e4930926d9219e1d41d5726bd691b
           path: assembly46
           fetch-depth: 0
       - name: Checkout integrated Form
@@ -71,20 +71,43 @@ jobs:
           diff -qr assembly-base/src assembly46/src
           diff -q assembly-base/package.json assembly46/package.json
           diff -q assembly-base/machine.json assembly46/machine.json
-          actual="$(git -C assembly46 diff --name-only 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3..3c31efbdbc3875a53bf798ad2ffea5473547de38 | sort)"
-          expected="$(printf '%s\n' '.github/workflows/current-fleet.yml' 'test/current-form-position-receiver.integration.test.js' 'test/current-form-size-receiver.integration.test.js' 'test/round37-current-fleet.integration.test.js' | sort)"
+          actual="$(git -C assembly46 diff --name-only 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3..1288a9b01c4e4930926d9219e1d41d5726bd691b | sort)"
+          expected="$(printf '%s\n' '.github/workflows/current-fleet.yml' 'fixtures/current-fleet.json' 'test/current-fleet-pin-integrity.test.js' 'test/current-form-position-receiver.integration.test.js' 'test/current-form-size-receiver.integration.test.js' 'test/round37-current-fleet.integration.test.js' | sort)"
           test "$actual" = "$expected"
       - name: Independent exact-head receiver attack
         working-directory: verification
         env:
           R43_ASSEMBLY_BASE_COMMIT: 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3
           R43_ASSEMBLY46_ROOT: ${{ github.workspace }}/assembly46
-          R43_ASSEMBLY46_COMMIT: 3c31efbdbc3875a53bf798ad2ffea5473547de38
+          R43_ASSEMBLY46_COMMIT: 1288a9b01c4e4930926d9219e1d41d5726bd691b
           R43_FORM_ROOT: ${{ github.workspace }}/form
           R43_FORM_COMMIT: 416326bcafec510dc16cd3712677461d45ca8b6c
           R43_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
           R43_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
         run: node --test test/current-growth-round43-assembly46-form-position-closure.test.js
+      - name: Attack manifest validator against non-checkout source-text spoofing
+        working-directory: assembly46
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/current-fleet.yml')
+          text = p.read_text()
+          good = '416326bcafec510dc16cd3712677461d45ca8b6c'
+          stale = '0000000000000000000000000000000000000000'
+          text = text.replace(good, stale)
+          text += f'''\n# Synthetic non-checkout text carrying the manifest identity.\njobs:\n  verification-spoof:\n    runs-on: ubuntu-latest\n    steps:\n      - run: |\n          cat <<'EOF' >/dev/null\n          repository: mike-axiom-mir/axm-morphtile-machine-form\n          ref: {good}\n          CURRENT_FORM_COMMIT: {good}\n          EOF\n'''
+          p.write_text(text)
+          PY
+          if node --test test/current-fleet-pin-integrity.test.js; then
+            echo 'FAIL: current-fleet pin validator accepted stale executable Form pins because matching source text existed outside the checkout/env contract.'
+            exit 1
+          fi
+      - name: Restore exact candidate worktree
+        working-directory: assembly46
+        shell: bash
+        run: git checkout -- .github/workflows/current-fleet.yml
       - name: Replay candidate focused position receiver proof
         working-directory: assembly46
         env:
