@@ -1,0 +1,48 @@
+name: round 47 repaired Assembly47 source integrity
+
+on:
+  push:
+    branches:
+      - verification/round47-assembly47-repair
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/round47-assembly47-repair.yml"
+      - "test/round47-assembly47-repaired-source-integrity.test.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly47-repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 3d0ee8511e1440d09511f0c777f67c2b63f02d7b
+          path: assembly-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: fd17b1115e24028c3014f7dc6633b493abedbb5d
+          fetch-depth: 0
+          path: assembly47
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent repaired Assembly 47 exact-head attack
+        working-directory: verification
+        env:
+          R47_ASSEMBLY_BASE_COMMIT: 3d0ee8511e1440d09511f0c777f67c2b63f02d7b
+          R47_ASSEMBLY47_ROOT: ${{ github.workspace }}/assembly47
+          R47_ASSEMBLY47_COMMIT: fd17b1115e24028c3014f7dc6633b493abedbb5d
+        run: node --test test/round47-assembly47-repaired-source-integrity.test.js
+      - name: Replay repaired Assembly 47 producer suite
+        working-directory: assembly47
+        run: npm test
