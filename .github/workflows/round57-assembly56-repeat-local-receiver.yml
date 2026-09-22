@@ -1,11 +1,12 @@
 name: round 57 Assembly56 repeat-local receiver
 
-# Branch-local activation nudge: the introducing commit did not schedule this new workflow,
-# so this second push changes no verifier semantics and gives GitHub an existing branch workflow to trigger.
+# New branch workflows written through the connector were not receiving a push run.
+# pull_request gives the existing open PR a synchronize event path while preserving the exact pinned verifier semantics.
 on:
   push:
     branches:
       - verification/round57-assembly56-repeat-local-receiver
+  pull_request:
   workflow_dispatch:
 
 permissions:
