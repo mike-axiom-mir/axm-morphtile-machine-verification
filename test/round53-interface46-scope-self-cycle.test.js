@@ -61,7 +61,7 @@ test("Interface 46 exact head has the bounded producer scope and one registered 
     "src/index.js",
     "test/integration-proof-manifest.json",
     "test/self-composition-inertness.integration.test.js",
-    "test/tile-element.test.js"
+    "test/tile-composition.test.js"
   ].sort());
   assert.equal(git(process.env.R53_INTERFACE46_ROOT, ["diff", "--name-only", INTERFACE_BASE, INTERFACE46, "--", "machine.json", "package.json", "src/interface-intent.js"]), "");
 
