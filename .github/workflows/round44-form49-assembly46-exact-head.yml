@@ -1,0 +1,155 @@
+name: round 44 Form49 Assembly46 Interface40 exact-head verification
+
+on:
+  push:
+    branches:
+      - verification/round44-form49-assembly46-exact-head
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/round44-form49-assembly46-exact-head.yml"
+      - "test/round44-form49-position-state.test.js"
+      - "test/round44-assembly46-fleet-manifest.test.js"
+      - "test/round44-interface40-shared-canonical-control.test.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-form49:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 416326bcafec510dc16cd3712677461d45ca8b6c
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: a2dc5158c015c8c75f679ea0261965f1e39c2537
+          path: form49
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Form 49 exact-head attack
+        working-directory: verification
+        env:
+          R44_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R44_FORM_BASE_COMMIT: 416326bcafec510dc16cd3712677461d45ca8b6c
+          R44_FORM49_ROOT: ${{ github.workspace }}/form49
+          R44_FORM49_COMMIT: a2dc5158c015c8c75f679ea0261965f1e39c2537
+          R44_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R44_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round44-form49-position-state.test.js
+      - name: Replay exact Form 49 producer suite
+        working-directory: form49
+        run: npm test
+
+  verify-assembly46:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 893ceaf76cc1d60f8afe3b7edf8baf6d478ac32a
+          fetch-depth: 0
+          path: assembly46
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 416326bcafec510dc16cd3712677461d45ca8b6c
+          path: siblings/form
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: siblings/surface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: siblings/capability
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: d242b9a18625b663dd389684e1f16d614432f3c9
+          path: siblings/interface
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Assembly 46 manifest/binding attack
+        working-directory: verification
+        env:
+          R44_ASSEMBLY46_ROOT: ${{ github.workspace }}/assembly46
+          R44_ASSEMBLY_BASE_COMMIT: 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3
+          R44_ASSEMBLY46_COMMIT: 893ceaf76cc1d60f8afe3b7edf8baf6d478ac32a
+        run: node --test test/round44-assembly46-fleet-manifest.test.js
+      - name: Replay exact Assembly 46 full receiver suite against manifest identities
+        working-directory: assembly46
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/siblings/form/src
+          CURRENT_FORM_COMMIT: 416326bcafec510dc16cd3712677461d45ca8b6c
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/siblings/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/siblings/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/siblings/interface/src
+          CURRENT_INTERFACE_COMMIT: d242b9a18625b663dd389684e1f16d614432f3c9
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-interface40:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: a572a27c23478b678f5051c1add8c842e1d0dd16
+          fetch-depth: 0
+          path: interface40
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 40 shared-state attack
+        working-directory: verification
+        env:
+          R44_INTERFACE40_ROOT: ${{ github.workspace }}/interface40
+          R44_INTERFACE_BASE_COMMIT: d242b9a18625b663dd389684e1f16d614432f3c9
+          R44_INTERFACE40_COMMIT: a572a27c23478b678f5051c1add8c842e1d0dd16
+          R44_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R44_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round44-interface40-shared-canonical-control.test.js
+      - name: Replay exact Interface 40 producer suite
+        working-directory: interface40
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
