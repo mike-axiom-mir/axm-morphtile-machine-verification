@@ -1,0 +1,103 @@
+name: round 53 Interface46 Assembly52
+
+on:
+  push:
+    branches:
+      - verification/round53-interface46-assembly52
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface46:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 115fdd6121449f3f496a76777ed2c20b5a1cdcd7
+          fetch-depth: 0
+          path: interface46
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 46 scope and self-cycle attack
+        working-directory: verification
+        env:
+          R53_INTERFACE_BASE_COMMIT: 586ac55c2523be59739b75c446b0b95938ae5319
+          R53_INTERFACE46_ROOT: ${{ github.workspace }}/interface46
+          R53_INTERFACE46_COMMIT: 115fdd6121449f3f496a76777ed2c20b5a1cdcd7
+          R53_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R53_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round53-interface46-scope-self-cycle.test.js
+      - name: Replay Interface 46 producer suite
+        working-directory: interface46
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-assembly52:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 02861b410d6b2d35c35e60a2d742e573973a5862
+          fetch-depth: 0
+          path: assembly52
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 586ac55c2523be59739b75c446b0b95938ae5319
+          path: interface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Assembly 52 stable-status truth attack
+        working-directory: verification
+        env:
+          R53_ASSEMBLY_BASE_COMMIT: 7e6836d3fc171668b14c4e99d265ec9ddb7b31f4
+          R53_ASSEMBLY52_ROOT: ${{ github.workspace }}/assembly52
+          R53_ASSEMBLY52_COMMIT: 02861b410d6b2d35c35e60a2d742e573973a5862
+          R53_FORM_MAIN_ROOT: ${{ github.workspace }}/form-main
+          R53_SURFACE_MAIN_ROOT: ${{ github.workspace }}/surface-main
+          R53_CAPABILITY_MAIN_ROOT: ${{ github.workspace }}/capability-main
+          R53_INTERFACE_MAIN_ROOT: ${{ github.workspace }}/interface-main
+          R53_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+        run: node --test test/round53-assembly52-stable-status.test.js
+      - name: Replay Assembly 52 producer suite
+        working-directory: assembly52
+        run: npm test
