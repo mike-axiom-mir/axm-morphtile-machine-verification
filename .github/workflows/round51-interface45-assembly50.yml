@@ -1,0 +1,122 @@
+name: round 51 Interface45 Assembly50
+
+on:
+  push:
+    branches:
+      - verification/round51-interface45-assembly50
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-interface45:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 948e6aeca7426a2f3b80cf5904640c943713ea17
+          fetch-depth: 0
+          path: interface45
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 45 composition authority collision attack
+        working-directory: verification
+        env:
+          R51_INTERFACE_BASE_COMMIT: fc918bcddf4e0dce9bbc649ec35887c98a2d2af3
+          R51_INTERFACE45_ROOT: ${{ github.workspace }}/interface45
+          R51_INTERFACE45_COMMIT: 948e6aeca7426a2f3b80cf5904640c943713ea17
+          R51_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R51_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round51-interface45-composed-authority-collision.test.js
+      - name: Replay Interface 45 producer suite
+        working-directory: interface45
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-assembly50:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: be2569087358c503c11b4d213cd2845d41dc862b
+          fetch-depth: 0
+          path: assembly50
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: fc918bcddf4e0dce9bbc649ec35887c98a2d2af3
+          path: interface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Assembly 50 exact-fleet truth attack
+        working-directory: verification
+        env:
+          R51_ASSEMBLY_BASE_COMMIT: 5171aa6f1d12141192604bd458042013f65be8f3
+          R51_ASSEMBLY50_ROOT: ${{ github.workspace }}/assembly50
+          R51_ASSEMBLY50_COMMIT: be2569087358c503c11b4d213cd2845d41dc862b
+          R51_FORM_MAIN_ROOT: ${{ github.workspace }}/form-main
+          R51_SURFACE_MAIN_ROOT: ${{ github.workspace }}/surface-main
+          R51_CAPABILITY_MAIN_ROOT: ${{ github.workspace }}/capability-main
+          R51_INTERFACE_MAIN_ROOT: ${{ github.workspace }}/interface-main
+          R51_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+        run: node --test test/round51-assembly50-current-fleet-truth.test.js
+      - name: Independently replay current Form 53 grid-size receiver closure
+        working-directory: assembly50
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form-main/src
+          CURRENT_FORM_COMMIT: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-form-grid-position-receiver.integration.test.js
+      - name: Replay Assembly 50 exact-fleet producer suite
+        working-directory: assembly50
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form-main/src
+          CURRENT_FORM_COMMIT: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface-main/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability-main/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface-main/src
+          CURRENT_INTERFACE_COMMIT: fc918bcddf4e0dce9bbc649ec35887c98a2d2af3
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
