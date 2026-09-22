@@ -1,0 +1,62 @@
+name: round 53 Core17 repeat scope
+
+on:
+  push:
+    branches:
+      - verification/round53-core17-repeat-scope
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-core17:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: cf0416051a20bc0f5dbd78c27302ec799132078f
+          fetch-depth: 0
+          path: core17
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact bounded core diff and lexical-scope ownership
+        working-directory: core17
+        env:
+          CORE17_BASE: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const cp = require('child_process');
+          const base = process.env.CORE17_BASE;
+          const files = cp.execFileSync('git', ['diff', '--name-only', base + '..HEAD'], { encoding: 'utf8' }).trim().split(/\r?\n/).filter(Boolean).sort();
+          const expected = ['core/morphtile.js', 'test/views.js'];
+          if (JSON.stringify(files) !== JSON.stringify(expected)) throw new Error('unexpected Core17 scope: ' + JSON.stringify(files));
+          const src = fs.readFileSync('core/morphtile.js', 'utf8');
+          const tests = fs.readFileSync('test/views.js', 'utf8');
+          const must = [
+            "const labels = (e, d) => { const v = evs(e, d);",
+            "text: labels(n.text, '')",
+            "text: labels(n.label, '')",
+            "text: labels(n.label, sock.label || n.button)",
+            "text: labels(n.label, p2.label || p2.id)",
+            "label(v.title, tile.name)",
+            "Number(ev(v.width, 1))"
+          ];
+          for (const s of must) if (!src.includes(s)) throw new Error('missing expected bounded scope path: ' + s);
+          if (src.includes('labels(v.title')) throw new Error('view title authority widened into repeat lexical scope');
+          if (src.includes('labels(v.width')) throw new Error('view width authority widened into repeat lexical scope');
+          if (!tests.includes('mt_tower:toggle') || !tests.includes('mt_tower:levels')) throw new Error('authority regression assertions missing');
+          if (!tests.includes('repeat lexical scope reaches expression-backed node labels')) throw new Error('node-label lexical regression proof missing');
+          NODE
+      - name: Replay complete Core17 producer proof
+        working-directory: core17
+        run: |
+          npm test
+          npm run build
+          npm run conformance
