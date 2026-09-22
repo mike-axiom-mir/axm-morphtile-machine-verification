@@ -1,5 +1,9 @@
 name: round 59 Assembly57 current fleet
 
+# Producer evidence for exact Assembly head 0190b870ef6a1d8430deb032b0389438f2801d01:
+# current-fleet run 35763322566 = SUCCESS
+# test run 35763322571 = SUCCESS
+
 on:
   push:
     branches:
