@@ -1,0 +1,99 @@
+name: round 49 Form53 Interface44
+
+on:
+  push:
+    branches:
+      - verification/round49-form53-interface44
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/round49-form53-interface44.yml"
+      - "test/round49-form53-grid-size-state.test.js"
+      - "test/round49-interface44-control-write-proof.test.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-form53:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: dd5764efdcd75bb826dd908a4d2245ad04d0a57a
+          fetch-depth: 0
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 2484c05a9782e7eb84730a03e4a57e9f63584b55
+          fetch-depth: 0
+          path: form53
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Form 53 exact-head attack
+        working-directory: verification
+        env:
+          R49_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R49_FORM_BASE_COMMIT: dd5764efdcd75bb826dd908a4d2245ad04d0a57a
+          R49_FORM53_ROOT: ${{ github.workspace }}/form53
+          R49_FORM53_COMMIT: 2484c05a9782e7eb84730a03e4a57e9f63584b55
+        run: node --test test/round49-form53-grid-size-state.test.js
+      - name: Replay Form 53 producer suite
+        working-directory: form53
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-interface44:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ddafc9e30144d12605c6e4198cd8d6c5764e6212
+          fetch-depth: 0
+          path: interface-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: b2d2b809f1805bc029cb2b5aaa18fcc0aa6c0cf8
+          fetch-depth: 0
+          path: interface44
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 44 exact-head attack
+        working-directory: verification
+        env:
+          R49_INTERFACE_BASE_COMMIT: ddafc9e30144d12605c6e4198cd8d6c5764e6212
+          R49_INTERFACE44_ROOT: ${{ github.workspace }}/interface44
+          R49_INTERFACE44_COMMIT: b2d2b809f1805bc029cb2b5aaa18fcc0aa6c0cf8
+        run: node --test test/round49-interface44-control-write-proof.test.js
+      - name: Replay Interface 44 producer suite
+        working-directory: interface44
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
