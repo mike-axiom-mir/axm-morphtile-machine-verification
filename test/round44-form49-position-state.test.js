@@ -113,8 +113,15 @@ test("Form 49 receiver-visible geometry remains finite and predecessor-equivalen
   assert.equal(headOut.status, "CANDIDATE");
   assert.deepEqual(leafOf(headOut.candidate).pos, leafOf(baseOut.candidate).pos);
 
-  const baseMesh = MT.compileMesh(baseOut.candidate, MT.createWorld("r44-base"));
-  const headMesh = MT.compileMesh(headOut.candidate, MT.createWorld("r44-head"));
+  const baseTile = MT.createTile(baseOut.candidate);
+  const headTile = MT.createTile(headOut.candidate);
+  const baseValidity = MT.validateTile(baseTile);
+  const headValidity = MT.validateTile(headTile);
+  assert.equal(baseValidity.ok, true, baseValidity.errors.join(", "));
+  assert.equal(headValidity.ok, true, headValidity.errors.join(", "));
+
+  const baseMesh = MT.compileMesh(baseTile, MT.createWorld("r44-base"));
+  const headMesh = MT.compileMesh(headTile, MT.createWorld("r44-head"));
   assert.equal(baseMesh.hold, null, JSON.stringify(baseMesh));
   assert.equal(headMesh.hold, null, JSON.stringify(headMesh));
   assert.equal(headMesh.recipe_parts, baseMesh.recipe_parts);
