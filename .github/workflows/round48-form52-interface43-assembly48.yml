@@ -1,0 +1,123 @@
+name: round 48 Form52 Interface43 Assembly48
+
+on:
+  push:
+    branches:
+      - verification/round48-form52-interface43-assembly48
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/round48-form52-interface43-assembly48.yml"
+      - "test/round48-form52-grid-scale-expression-state.test.js"
+      - "test/round48-interface43-host-mode-canonical-control.test.js"
+      - "test/round48-assembly48-data-only-fleet-evidence.test.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-form52:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: f2f549266e3a5c15eb87fd967261eb874a990d27
+          path: form-base
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 3a4b11e69e23fd3d131ecb9648f93e3ecaa84033
+          fetch-depth: 0
+          path: form52
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Form 52 exact-head attack
+        working-directory: verification
+        env:
+          R48_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R48_FORM_BASE_COMMIT: f2f549266e3a5c15eb87fd967261eb874a990d27
+          R48_FORM52_ROOT: ${{ github.workspace }}/form52
+          R48_FORM52_COMMIT: 3a4b11e69e23fd3d131ecb9648f93e3ecaa84033
+          R48_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R48_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round48-form52-grid-scale-expression-state.test.js
+      - name: Replay Form 52 producer suite
+        working-directory: form52
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-interface43:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: e494c15a58f97fa02e771c5dcebe96005db98ca3
+          fetch-depth: 0
+          path: interface43
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Interface 43 exact-head attack
+        working-directory: verification
+        env:
+          R48_INTERFACE_BASE_COMMIT: 67894cab657168bd316af1f0c6b6463c7cc7bb3a
+          R48_INTERFACE43_ROOT: ${{ github.workspace }}/interface43
+          R48_INTERFACE43_COMMIT: e494c15a58f97fa02e771c5dcebe96005db98ca3
+          R48_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R48_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/round48-interface43-host-mode-canonical-control.test.js
+      - name: Replay Interface 43 producer suite
+        working-directory: interface43
+        env:
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
+
+  verify-assembly48:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 64e04f13fd98ff1a91b573b6ed17802fa35750d6
+          fetch-depth: 0
+          path: assembly48
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Assembly 48 data-only evidence attack
+        working-directory: verification
+        env:
+          R48_ASSEMBLY_BASE_COMMIT: 2b080e5789074eab5829b324c360936bb1878aa0
+          R48_ASSEMBLY48_ROOT: ${{ github.workspace }}/assembly48
+          R48_ASSEMBLY48_COMMIT: 64e04f13fd98ff1a91b573b6ed17802fa35750d6
+        run: node --test test/round48-assembly48-data-only-fleet-evidence.test.js
+      - name: Replay Assembly 48 producer suite
+        working-directory: assembly48
+        run: npm test
