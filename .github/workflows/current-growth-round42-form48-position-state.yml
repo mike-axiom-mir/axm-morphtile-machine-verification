@@ -1,0 +1,63 @@
+name: current-growth-round42-form48-position-state
+
+on:
+  push:
+    branches:
+      - verification/round42-form48-position-state
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-form48:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+
+      - name: Checkout Form integrated predecessor
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: b2c2202e746baf4d9dc23ec5e328ac9c63f2b695
+          path: form-base
+
+      - name: Checkout Form 48 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 0c8385b4d6519662b85e961479597ba4bf99c49d
+          path: form48
+
+      - name: Checkout pinned MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Independent exact-head attack
+        working-directory: verification
+        env:
+          R42_FORM_BASE_ROOT: ${{ github.workspace }}/form-base
+          R42_FORM_BASE_COMMIT: b2c2202e746baf4d9dc23ec5e328ac9c63f2b695
+          R42_FORM48_ROOT: ${{ github.workspace }}/form48
+          R42_FORM48_COMMIT: 0c8385b4d6519662b85e961479597ba4bf99c49d
+          R42_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R42_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-growth-round42-form48-position-state.test.js
+
+      - name: Replay Form candidate full producer suite independently
+        working-directory: form48
+        env:
+          MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
