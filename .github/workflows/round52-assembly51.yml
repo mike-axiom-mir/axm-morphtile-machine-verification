@@ -1,0 +1,67 @@
+name: round 52 Assembly51
+
+on:
+  push:
+    branches:
+      - verification/round52-assembly51
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly51:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verification
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 9dc3b67903e45b1afe9bb5e621308451d5e3a52b
+          fetch-depth: 0
+          path: assembly51
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: ef6a09e4d662d960e015f61d7991c58d33f5c6d1
+          path: form-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: 586ac55c2523be59739b75c446b0b95938ae5319
+          path: interface-main
+      - uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent Assembly 51 exact-fleet truth attack
+        working-directory: verification
+        env:
+          R52_ASSEMBLY_BASE_COMMIT: cd0956217827ab263b76f4eab7f986f822bb6631
+          R52_ASSEMBLY51_ROOT: ${{ github.workspace }}/assembly51
+          R52_ASSEMBLY51_COMMIT: 9dc3b67903e45b1afe9bb5e621308451d5e3a52b
+          R52_FORM_MAIN_ROOT: ${{ github.workspace }}/form-main
+          R52_SURFACE_MAIN_ROOT: ${{ github.workspace }}/surface-main
+          R52_CAPABILITY_MAIN_ROOT: ${{ github.workspace }}/capability-main
+          R52_INTERFACE_MAIN_ROOT: ${{ github.workspace }}/interface-main
+          R52_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+        run: node --test test/round52-assembly51-current-fleet-truth.test.js
+      - name: Replay Assembly 51 producer suite
+        working-directory: assembly51
+        run: npm test
