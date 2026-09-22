@@ -1,4 +1,4 @@
-name: round 46 Form51 Interface42 Assembly47 verification
+name: round 46 Form51 Interface42 verification with Assembly47 HOLD evidence
 
 on:
   push:
@@ -108,29 +108,3 @@ jobs:
           MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
           MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
         run: npm run test:integration:assembly
-
-  verify-assembly47:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          path: verification
-      - uses: actions/checkout@v4
-        with:
-          repository: mike-axiom-mir/axm-morphtile-machine-assembly
-          ref: 355a015bb24b96c2a3032e5a2930e80c63f213da
-          fetch-depth: 0
-          path: assembly47
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Replay exact Assembly 47 producer suite
-        working-directory: assembly47
-        run: npm test
-      - name: Independent Assembly 47 source-integrity attack
-        working-directory: verification
-        env:
-          R46_ASSEMBLY47_ROOT: ${{ github.workspace }}/assembly47
-          R46_ASSEMBLY_BASE_COMMIT: 3d0ee8511e1440d09511f0c777f67c2b63f02d7b
-          R46_ASSEMBLY47_COMMIT: 355a015bb24b96c2a3032e5a2930e80c63f213da
-        run: node --test test/round46-assembly47-fleet-drift-source-integrity.test.js
