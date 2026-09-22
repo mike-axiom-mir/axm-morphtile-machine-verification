@@ -1,0 +1,109 @@
+name: current-growth-round43-assembly46-form-position-closure
+
+on:
+  push:
+    branches:
+      - verification/round43-assembly46-form-position-closure
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-assembly46:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+      - name: Checkout Assembly integrated base
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3
+          path: assembly-base
+      - name: Checkout Assembly 46 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 3c31efbdbc3875a53bf798ad2ffea5473547de38
+          path: assembly46
+          fetch-depth: 0
+      - name: Checkout integrated Form
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-form
+          ref: 416326bcafec510dc16cd3712677461d45ca8b6c
+          path: form
+      - name: Checkout integrated Surface
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-surface
+          ref: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          path: surface
+      - name: Checkout integrated Capability
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-capability
+          ref: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          path: capability
+      - name: Checkout integrated Interface
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: ec92507b82d855de49ba024ecfdd32aada24b186
+          path: interface
+      - name: Checkout pinned MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+          path: morphtile
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Prove evidence-only runtime identity and exact changed-file set
+        shell: bash
+        run: |
+          set -euo pipefail
+          diff -qr assembly-base/src assembly46/src
+          diff -q assembly-base/package.json assembly46/package.json
+          diff -q assembly-base/machine.json assembly46/machine.json
+          actual="$(git -C assembly46 diff --name-only 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3..3c31efbdbc3875a53bf798ad2ffea5473547de38 | sort)"
+          expected="$(printf '%s\n' '.github/workflows/current-fleet.yml' 'test/current-form-position-receiver.integration.test.js' 'test/current-form-size-receiver.integration.test.js' 'test/round37-current-fleet.integration.test.js' | sort)"
+          test "$actual" = "$expected"
+      - name: Independent exact-head receiver attack
+        working-directory: verification
+        env:
+          R43_ASSEMBLY_BASE_COMMIT: 778bd4f46d9675bbbc991ba98a0bddf85a92c6b3
+          R43_ASSEMBLY46_ROOT: ${{ github.workspace }}/assembly46
+          R43_ASSEMBLY46_COMMIT: 3c31efbdbc3875a53bf798ad2ffea5473547de38
+          R43_FORM_ROOT: ${{ github.workspace }}/form
+          R43_FORM_COMMIT: 416326bcafec510dc16cd3712677461d45ca8b6c
+          R43_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R43_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-growth-round43-assembly46-form-position-closure.test.js
+      - name: Replay candidate focused position receiver proof
+        working-directory: assembly46
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: 416326bcafec510dc16cd3712677461d45ca8b6c
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: node --test test/current-form-position-receiver.integration.test.js
+      - name: Replay full exact candidate suite against integrated sibling fleet
+        working-directory: assembly46
+        env:
+          CURRENT_FORM_MACHINE_PATH: ${{ github.workspace }}/form/src
+          CURRENT_FORM_COMMIT: 416326bcafec510dc16cd3712677461d45ca8b6c
+          CURRENT_SURFACE_MACHINE_PATH: ${{ github.workspace }}/surface/src
+          CURRENT_SURFACE_COMMIT: 4e4495182aa83e5dfba37722fc3756a70cfaafaa
+          CURRENT_CAPABILITY_MACHINE_PATH: ${{ github.workspace }}/capability/src
+          CURRENT_CAPABILITY_COMMIT: edc07af182ee26ca1ceb64b5d5205591ec6aca9d
+          CURRENT_INTERFACE_MACHINE_PATH: ${{ github.workspace }}/interface/src
+          CURRENT_INTERFACE_COMMIT: ec92507b82d855de49ba024ecfdd32aada24b186
+          CURRENT_MORPHTILE_CORE_PATH: ${{ github.workspace }}/morphtile/core/morphtile.js
+          CURRENT_MORPHTILE_COMMIT: 2bdf8eade1376055473b9cc1b11734b72a5566e5
+        run: npm test
