@@ -1,10 +1,6 @@
 name: current-growth-round39-form45-interface38
 
 on:
-  push:
-    branches:
-      - verification/round39-form45-grid-setting-state
-  pull_request:
   workflow_dispatch:
 
 permissions:
