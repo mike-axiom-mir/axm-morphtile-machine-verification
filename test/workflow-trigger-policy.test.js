@@ -11,7 +11,7 @@ const PRE_MIGRATION_MAIN_PUSH_RUNS = 48;
 const EXPECTED_MAIN_PUSH_AUTOMATIC = 16;
 const PRE_PR_GUARD_HEAD = '66f37ccbb2c755b9174df1f3bbd18dd0737bae6d';
 const PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS = 26;
-const EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY = 34;
+const EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY = 31;
 const MIGRATED_MANUAL_ONLY = [
   '.github/workflows/current-growth-round9.yml',
   '.github/workflows/current-growth-round10.yml',
@@ -48,6 +48,9 @@ const MIGRATED_MANUAL_ONLY = [
   '.github/workflows/current-growth-round38-form46.yml',
   '.github/workflows/current-growth-round39-form45.yml',
   '.github/workflows/current-growth-round40-assembly44.yml',
+  '.github/workflows/round60-interface48-readout-label.yml',
+  '.github/workflows/round62-interface49-integration-truth.yml',
+  '.github/workflows/round64-interface50-duplicate-bindings.yml',
 ];
 
 test('trigger classifier distinguishes unrestricted, branch-bounded, manual and PR lanes', () => {
@@ -88,9 +91,9 @@ test('bounded migration preserves manual replay and fails closed on reviewed aut
       `live observed executions are separate evidence because event filters can suppress a statically PR-capable workflow`,
   );
   assert.ok(
-    PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS <= EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY,
-    `observed pull-request runs ${PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS} at ${PRE_PR_GUARD_HEAD} cannot exceed the reviewed ` +
-      `static PR-capable inventory ${EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY}`,
+    PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS <= 34,
+    `historical observed pull-request runs ${PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS} at ${PRE_PR_GUARD_HEAD} cannot exceed the reviewed ` +
+      `pre-migration static PR-capable inventory 34`,
   );
   assert.ok(
     receipt.main_push_automatic.includes('.github/workflows/test.yml'),
