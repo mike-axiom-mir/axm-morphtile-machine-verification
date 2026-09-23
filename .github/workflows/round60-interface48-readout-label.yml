@@ -1,7 +1,6 @@
 name: round 60 Interface48 readout label
 
 on:
-  pull_request:
   workflow_dispatch:
 
 permissions:
