@@ -1,8 +1,7 @@
 name: current growth round 30 form interface
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
