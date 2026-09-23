@@ -1,0 +1,131 @@
+{
+  "schema": "axm.morphtile.verification.weekend-readiness/v1",
+  "scope": "foundation_acceptance_weekend_readiness",
+  "authority": "verification_evidence_only_not_canon_not_production_readiness",
+  "overall": "HOLD",
+  "fleet": {
+    "director": "0034f435f3f02f2ab81fc62a534c721624cd7287",
+    "form": "ef6a09e4d662d960e015f61d7991c58d33f5c6d1",
+    "surface": "4e4495182aa83e5dfba37722fc3756a70cfaafaa",
+    "capability": "edc07af182ee26ca1ceb64b5d5205591ec6aca9d",
+    "interface": "e89b091d490ea8cf7dad39cd5106e60da2cce4d8",
+    "assembly": "81fb8213ebfc04ba25be762d04395e6b162fe18e",
+    "verification": "d0e6eb1c5db461f66007adfde63d1ac728608821",
+    "core": "685df074701feeae3e9d789e532d0a3658030bf4"
+  },
+  "gates": [
+    {
+      "id": "director_six_machine_creation",
+      "status": "HOLD",
+      "reason": "Current Director main still pins Verification 1c23842464b59dc75985d6dd2f244dbd78199666 instead of settled Verification main d0e6eb1c5db461f66007adfde63d1ac728608821. Director PR 69 is a receipt-only one-pin convergence candidate and its exact head ef9871d5273573465ed8372d59f47cc0c9dfaa32 passed Ubuntu Node20 and Windows Node22 unit, ecosystem-integration and creation-proof jobs in Actions run 35809035560, but it is still draft/unmerged.",
+      "evidence": ["director-pr-69", "director-actions-35809035560"]
+    },
+    {
+      "id": "form_geometry",
+      "status": "PASS",
+      "reason": "Exact Form main is the Assembly fleet pin and its full node --test suite passed on Actions run 35707960392; repository scope contains generated/composed geometry, grid size/scale/rotation/position and portable form paths.",
+      "evidence": ["form-main-ef6a09e4d662d960e015f61d7991c58d33f5c6d1", "form-actions-35707960392"]
+    },
+    {
+      "id": "surface_material_paint_preservation",
+      "status": "PASS",
+      "reason": "Exact Surface main is the Assembly fleet pin and its full node --test suite passed on Actions run 35569644020 at the integrated change that keeps base-only material controls free of fallback paint.",
+      "evidence": ["surface-main-4e4495182aa83e5dfba37722fc3756a70cfaafaa", "surface-actions-35569644020"]
+    },
+    {
+      "id": "capability_state_action_sleep_wake",
+      "status": "PASS",
+      "reason": "Exact Capability main is the Assembly fleet pin and its full node --test suite passed on Actions run 35494907580 at the integrated omitted-wake compatibility boundary. Core exact-main tests also cover signal/state progression, offline elapsed-time reconstruction and replay.",
+      "evidence": ["capability-main-edc07af182ee26ca1ceb64b5d5205591ec6aca9d", "capability-actions-35494907580", "core-test-run-js"]
+    },
+    {
+      "id": "interface_canonical_presentation",
+      "status": "PASS",
+      "reason": "Exact Interface main is the Assembly fleet pin and Actions run 35807800186 passed the full node --test suite. Current tests explicitly cover canonical title, canonical body text, meter, readout/shared binding, action write-through, control write-through and canonical-state ownership boundaries. Verification PR 123 independently proved the current canonical body-text transition against exact Core without copied state or structural rewrite.",
+      "evidence": ["interface-main-e89b091d490ea8cf7dad39cd5106e60da2cce4d8", "interface-actions-35807800186", "verification-pr-123"]
+    },
+    {
+      "id": "assembly_dependency_kit_closure",
+      "status": "PASS",
+      "reason": "Assembly exact main current-fleet receipt pins Form, Surface, Capability, Interface and Core to the live settled identities, and current-fleet Actions run 35808350445 passed.",
+      "evidence": ["assembly-current-fleet-json", "assembly-actions-35808350445"]
+    },
+    {
+      "id": "fresh_world_kit_import",
+      "status": "PASS",
+      "reason": "Core exact-main test/kits.js exports a kit, JSON-roundtrips it, imports it into a fresh world, validates dependency closure and compares compiled geometry exactly; the same test holds tampered hashes and conflicts closed. Exact Core main Actions run 35763206939 passed the complete npm test suite containing test/kits.js.",
+      "evidence": ["core-test-kits-js", "core-actions-35763206939"]
+    },
+    {
+      "id": "workspace_export_import_hash_stability",
+      "status": "PASS",
+      "reason": "Core exact-main test/run.js explicitly proves workspace export -> JSON -> import by replaying evidence and requires imported live hash equality with the original. The same exact Core main full suite passed on Actions run 35763206939.",
+      "evidence": ["core-test-run-js", "core-actions-35763206939"]
+    },
+    {
+      "id": "mutation_exact_rollback",
+      "status": "PASS",
+      "reason": "Core exact-main test/run.js mutates a clone, commits it, requires an exact rollback receipt and the original structural hash, and separately refuses rollback after state drift. The exact Core main full suite passed.",
+      "evidence": ["core-test-run-js", "core-actions-35763206939"]
+    },
+    {
+      "id": "malformed_tampered_evidence_fail_closed",
+      "status": "PASS",
+      "reason": "Core exact-main tests reject hash-mismatched or malformed kits, conflicting imports, invalid graph edits and byte/hash-mismatched bridge evidence without silently applying the candidate. The exact Core main full suite passed.",
+      "evidence": ["core-test-kits-js", "core-test-run-js", "core-actions-35763206939"]
+    },
+    {
+      "id": "declared_runtime_npm_dependency_free",
+      "status": "PASS",
+      "reason": "Core, Director, Form, Surface, Capability, Interface and Assembly package manifests declare no npm dependencies or devDependencies; their test/build entry points use repository code plus Node built-ins. This is package-dependency evidence only, not an air-gap execution claim.",
+      "evidence": ["package-manifests"]
+    },
+    {
+      "id": "airgapped_end_to_end_execution",
+      "status": "NOT_TESTED",
+      "reason": "No fresh disconnected-network execution was performed for this exact fleet in this activation. Dependency-free manifests do not by themselves prove air-gapped operation."
+    },
+    {
+      "id": "performance_cold_matter",
+      "status": "NOT_TESTED",
+      "reason": "No fresh measurement was taken for this exact settled fleet. Existing Cold Matter machinery is not promoted to a current performance claim without a measurement receipt."
+    },
+    {
+      "id": "visual_aesthetic_quality",
+      "status": "NOT_TESTED",
+      "reason": "Structural/runtime evidence is not visual acceptance. No aesthetic or visual-quality judgment is made by this receipt."
+    },
+    {
+      "id": "layer_z_order_authority",
+      "status": "HOLD",
+      "reason": "Current Interface evidence deliberately keeps layer/z-order authoring fail-closed; no canonical Core authority contract exists yet."
+    },
+    {
+      "id": "cross_root_creation_authority",
+      "status": "HOLD",
+      "reason": "Current evidence permits representation boundaries but does not grant Interface private cross-root creation authority."
+    }
+  ],
+  "issue_69": {
+    "status": "HOLD",
+    "main_push_automatic_before_candidate": 16,
+    "static_pull_request_capable_before_candidate": 34,
+    "observed_pull_request_runs_before_candidate": 26,
+    "candidate_pr": 126,
+    "candidate_head": "8248c9d7f5c20eb1a79184021971d723f482df02",
+    "candidate_static_pull_request_capable": 31,
+    "candidate_observed_pull_request_runs": 23,
+    "candidate_observed_push_runs": 16,
+    "candidate_generic_test_run": 35810868967,
+    "candidate_generic_test_job": 107021907097,
+    "candidate_generic_test_conclusion": "success",
+    "note": "Three superseded Interface historical receipts (rounds 60, 62, 64) retain exact workflow bodies and workflow_dispatch replay while losing unrelated automatic pull_request triggering. Static inventory fell by three and observed PR executions fell by the same three; main-push execution stayed unchanged."
+  },
+  "next_real_blocker": "Integrate or reject Director PR 69 after final upstream-head recheck so Director main and the six specialist mains share the settled Verification identity; then rerun this exact readiness receipt. Issue 69 remains a separate bounded infrastructure HOLD.",
+  "deferred_not_blockers_for_structural_use": [
+    "visual_aesthetic_quality",
+    "performance_without_new_measurement",
+    "layer_z_order_authority",
+    "cross_root_creation_authority"
+  ]
+}
