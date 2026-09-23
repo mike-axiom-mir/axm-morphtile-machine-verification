@@ -10,8 +10,8 @@ const PRE_MIGRATION_MAIN_SHA = 'ccf7e4d3e1dc52e86a9487796aefa67bcb2f5260';
 const PRE_MIGRATION_MAIN_PUSH_RUNS = 48;
 const EXPECTED_MAIN_PUSH_AUTOMATIC = 16;
 const PRE_PR_GUARD_HEAD = '66f37ccbb2c755b9174df1f3bbd18dd0737bae6d';
-const PRE_PR_GUARD_PULL_REQUEST_RUNS = 26;
-const EXPECTED_PULL_REQUEST_AUTOMATIC = 26;
+const PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS = 26;
+const EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY = 34;
 const MIGRATED_MANUAL_ONLY = [
   '.github/workflows/current-growth-round9.yml',
   '.github/workflows/current-growth-round10.yml',
@@ -73,7 +73,7 @@ test('trigger classifier distinguishes unrestricted, branch-bounded, manual and 
   });
 });
 
-test('bounded migration removes thirty-five historical automatic lanes while preserving replayability', () => {
+test('bounded migration preserves manual replay and fails closed on reviewed automatic inventories', () => {
   const receipt = auditWorkflows(ROOT);
   assert.equal(
     receipt.main_push_automatic.length,
@@ -83,9 +83,14 @@ test('bounded migration removes thirty-five historical automatic lanes while pre
   );
   assert.equal(
     receipt.pull_request_automatic.length,
-    EXPECTED_PULL_REQUEST_AUTOMATIC,
-    `automatic pull-request workflow count must match the measured ${PRE_PR_GUARD_PULL_REQUEST_RUNS} exact-head runs at ${PRE_PR_GUARD_HEAD} ` +
-      `and the explicit boundary ${EXPECTED_PULL_REQUEST_AUTOMATIC}; reject silent PR-only growth or unreviewed migration`,
+    EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY,
+    `static pull-request-capable workflow inventory must stay at reviewed boundary ${EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY}; ` +
+      `live observed executions are separate evidence because event filters can suppress a statically PR-capable workflow`,
+  );
+  assert.ok(
+    PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS <= EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY,
+    `observed pull-request runs ${PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS} at ${PRE_PR_GUARD_HEAD} cannot exceed the reviewed ` +
+      `static PR-capable inventory ${EXPECTED_PULL_REQUEST_AUTOMATIC_INVENTORY}`,
   );
   assert.ok(
     receipt.main_push_automatic.includes('.github/workflows/test.yml'),
@@ -102,10 +107,10 @@ test('bounded migration removes thirty-five historical automatic lanes while pre
     pre_migration_main_sha: PRE_MIGRATION_MAIN_SHA,
     pre_migration_main_push_runs: PRE_MIGRATION_MAIN_PUSH_RUNS,
     pre_pr_guard_head: PRE_PR_GUARD_HEAD,
-    pre_pr_guard_pull_request_runs: PRE_PR_GUARD_PULL_REQUEST_RUNS,
+    pre_pr_guard_observed_pull_request_runs: PRE_PR_GUARD_OBSERVED_PULL_REQUEST_RUNS,
     migrated_manual_only: MIGRATED_MANUAL_ONLY,
     current_main_push_automatic: receipt.main_push_automatic.length,
-    current_pull_request_automatic: receipt.pull_request_automatic.length,
+    current_pull_request_automatic_inventory: receipt.pull_request_automatic.length,
     current_manual_replay: receipt.manual_replay.length,
     automatic_without_manual_replay: receipt.automatic_without_manual_replay.length,
     inventory_sha256: receipt.inventory_sha256,
