@@ -3,8 +3,9 @@
   "scope": "foundation_acceptance_weekend_readiness",
   "authority": "verification_evidence_only_not_canon_not_production_readiness",
   "overall": "HOLD",
+  "foundation_structural_runtime": "PASS",
   "fleet": {
-    "director": "0034f435f3f02f2ab81fc62a534c721624cd7287",
+    "director": "710d65b6be3f30a5ec0475b4a1e44102c6979df5",
     "form": "ef6a09e4d662d960e015f61d7991c58d33f5c6d1",
     "surface": "4e4495182aa83e5dfba37722fc3756a70cfaafaa",
     "capability": "edc07af182ee26ca1ceb64b5d5205591ec6aca9d",
@@ -16,32 +17,32 @@
   "gates": [
     {
       "id": "director_six_machine_creation",
-      "status": "HOLD",
-      "reason": "Current Director main still pins Verification 1c23842464b59dc75985d6dd2f244dbd78199666 instead of settled Verification main d0e6eb1c5db461f66007adfde63d1ac728608821. Director PR 69 is a receipt-only one-pin convergence candidate and its exact head ef9871d5273573465ed8372d59f47cc0c9dfaa32 passed Ubuntu Node20 and Windows Node22 unit, ecosystem-integration and creation-proof jobs in Actions run 35809035560, but it is still draft/unmerged.",
-      "evidence": ["director-pr-69", "director-actions-35809035560"]
+      "status": "PASS",
+      "reason": "Director main 710d65b6be3f30a5ec0475b4a1e44102c6979df5 now pins the exact settled Form, Surface, Capability, Interface, Assembly, Verification and Core identities. Post-merge Actions run 35811435730 passed Ubuntu Node20 and Windows Node22 unit, ecosystem-integration and creation-proof jobs.",
+      "evidence": ["director-main-710d65b6be3f30a5ec0475b4a1e44102c6979df5", "director-actions-35811435730"]
     },
     {
       "id": "form_geometry",
       "status": "PASS",
-      "reason": "Exact Form main is the Assembly fleet pin and its full node --test suite passed on Actions run 35707960392; repository scope contains generated/composed geometry, grid size/scale/rotation/position and portable form paths.",
+      "reason": "Exact Form main is the Director and Assembly fleet pin and its full node --test suite passed on Actions run 35707960392; repository scope contains generated/composed geometry, grid size/scale/rotation/position and portable form paths.",
       "evidence": ["form-main-ef6a09e4d662d960e015f61d7991c58d33f5c6d1", "form-actions-35707960392"]
     },
     {
       "id": "surface_material_paint_preservation",
       "status": "PASS",
-      "reason": "Exact Surface main is the Assembly fleet pin and its full node --test suite passed on Actions run 35569644020 at the integrated change that keeps base-only material controls free of fallback paint.",
+      "reason": "Exact Surface main is the Director and Assembly fleet pin and its full node --test suite passed on Actions run 35569644020 at the integrated change that keeps base-only material controls free of fallback paint.",
       "evidence": ["surface-main-4e4495182aa83e5dfba37722fc3756a70cfaafaa", "surface-actions-35569644020"]
     },
     {
       "id": "capability_state_action_sleep_wake",
       "status": "PASS",
-      "reason": "Exact Capability main is the Assembly fleet pin and its full node --test suite passed on Actions run 35494907580 at the integrated omitted-wake compatibility boundary. Core exact-main tests also cover signal/state progression, offline elapsed-time reconstruction and replay.",
+      "reason": "Exact Capability main is the Director and Assembly fleet pin and its full node --test suite passed on Actions run 35494907580 at the integrated omitted-wake compatibility boundary. Core exact-main tests also cover signal/state progression, offline elapsed-time reconstruction and replay.",
       "evidence": ["capability-main-edc07af182ee26ca1ceb64b5d5205591ec6aca9d", "capability-actions-35494907580", "core-test-run-js"]
     },
     {
       "id": "interface_canonical_presentation",
       "status": "PASS",
-      "reason": "Exact Interface main is the Assembly fleet pin and Actions run 35807800186 passed the full node --test suite. Current tests explicitly cover canonical title, canonical body text, meter, readout/shared binding, action write-through, control write-through and canonical-state ownership boundaries. Verification PR 123 independently proved the current canonical body-text transition against exact Core without copied state or structural rewrite.",
+      "reason": "Exact Interface main is the Director and Assembly fleet pin and Actions run 35807800186 passed the full node --test suite. Current tests explicitly cover canonical title, canonical body text, meter, readout/shared binding, action write-through, control write-through and canonical-state ownership boundaries. Verification PR 123 independently proved the current canonical body-text transition against exact Core without copied state or structural rewrite.",
       "evidence": ["interface-main-e89b091d490ea8cf7dad39cd5106e60da2cce4d8", "interface-actions-35807800186", "verification-pr-123"]
     },
     {
@@ -121,10 +122,11 @@
     "candidate_generic_test_conclusion": "success",
     "note": "Three superseded Interface historical receipts (rounds 60, 62, 64) retain exact workflow bodies and workflow_dispatch replay while losing unrelated automatic pull_request triggering. Static inventory fell by three and observed PR executions fell by the same three; main-push execution stayed unchanged."
   },
-  "next_real_blocker": "Integrate or reject Director PR 69 after final upstream-head recheck so Director main and the six specialist mains share the settled Verification identity; then rerun this exact readiness receipt. Issue 69 remains a separate bounded infrastructure HOLD.",
-  "deferred_not_blockers_for_structural_use": [
+  "next_real_blocker": "Verification issue 69 remains materially open: candidate PR 126 proves a bounded 26 -> 23 PR-execution reduction without deleting historical receipts, but 23 unrelated PR executions remain convergence overhead. Review/integrate or reject PR 126; do not grow the readiness matrix merely to add tests.",
+  "deferred_not_blockers_for_current_structural_runtime_use": [
     "visual_aesthetic_quality",
     "performance_without_new_measurement",
+    "airgapped_execution_without_fresh_disconnected_run",
     "layer_z_order_authority",
     "cross_root_creation_authority"
   ]
