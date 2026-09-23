@@ -1,8 +1,7 @@
 name: current growth round 35 assembly41 assembly42
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
