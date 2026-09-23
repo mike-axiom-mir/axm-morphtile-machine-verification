@@ -1,8 +1,7 @@
 name: current growth round 28 assembly upstream HOLD
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
