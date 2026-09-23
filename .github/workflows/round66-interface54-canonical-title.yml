@@ -1,0 +1,72 @@
+name: round 66 Interface54 canonical title
+
+on:
+  push:
+    branches:
+      - verification/interface54-canonical-title
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  interface54-canonical-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Verification
+        uses: actions/checkout@v4
+        with:
+          path: verification
+      - name: Checkout Interface integrated predecessor
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: cec03d917227881100d4ce576ed49174e51d8210
+          path: interface-base
+      - name: Checkout Interface 54 exact candidate
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-interface
+          ref: fe83ee7c434f08ab32e1500ba93b880b5dbd2f2c
+          path: interface54
+      - name: Checkout Interface declared Assembly receiver
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 726fb4ad8efc4068bcda0c2c3d5e3873335b280e
+          path: assembly-declared
+      - name: Checkout live current Assembly receiver
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile-machine-assembly
+          ref: 6f16e1019af8d081e390a3a74d836a10a93d8d5d
+          path: assembly-current
+      - name: Checkout current MorphTile core
+        uses: actions/checkout@v4
+        with:
+          repository: mike-axiom-mir/axm-morphtile
+          ref: 685df074701feeae3e9d789e532d0a3658030bf4
+          path: morphtile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Independent exact-head authority and current-receiver attack
+        working-directory: verification
+        run: node --test test/round66-interface54-canonical-title.test.js
+        env:
+          R66_INTERFACE_BASE_ROOT: ${{ github.workspace }}/interface-base
+          R66_INTERFACE_BASE_COMMIT: cec03d917227881100d4ce576ed49174e51d8210
+          R66_INTERFACE54_ROOT: ${{ github.workspace }}/interface54
+          R66_INTERFACE54_COMMIT: fe83ee7c434f08ab32e1500ba93b880b5dbd2f2c
+          R66_ASSEMBLY_CURRENT_ROOT: ${{ github.workspace }}/assembly-current
+          R66_ASSEMBLY_CURRENT_COMMIT: 6f16e1019af8d081e390a3a74d836a10a93d8d5d
+          R66_MORPHTILE_ROOT: ${{ github.workspace }}/morphtile
+          R66_MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
+      - name: Replay Interface 54 full producer suite against its declared exact dependencies
+        working-directory: interface54
+        run: npm test
+        env:
+          MORPHTILE_ASSEMBLY: ${{ github.workspace }}/assembly-declared/src
+          MORPHTILE_ASSEMBLY_COMMIT: 726fb4ad8efc4068bcda0c2c3d5e3873335b280e
+          MORPHTILE_CORE: ${{ github.workspace }}/morphtile/core/morphtile.js
+          MORPHTILE_COMMIT: 685df074701feeae3e9d789e532d0a3658030bf4
