@@ -1,8 +1,7 @@
 name: current growth round 32 assembly final head
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
