@@ -9,6 +9,9 @@ const ROOT = path.join(__dirname, '..');
 const PRE_MIGRATION_MAIN_SHA = 'ccf7e4d3e1dc52e86a9487796aefa67bcb2f5260';
 const PRE_MIGRATION_MAIN_PUSH_RUNS = 48;
 const EXPECTED_MAIN_PUSH_AUTOMATIC = 16;
+const PRE_PR_GUARD_HEAD = '66f37ccbb2c755b9174df1f3bbd18dd0737bae6d';
+const PRE_PR_GUARD_PULL_REQUEST_RUNS = 26;
+const EXPECTED_PULL_REQUEST_AUTOMATIC = 26;
 const MIGRATED_MANUAL_ONLY = [
   '.github/workflows/current-growth-round9.yml',
   '.github/workflows/current-growth-round10.yml',
@@ -78,6 +81,12 @@ test('bounded migration removes thirty-five historical automatic lanes while pre
     `automatic main-push workflow count must fall from measured ${PRE_MIGRATION_MAIN_PUSH_RUNS} at ${PRE_MIGRATION_MAIN_SHA} ` +
       `to the explicit migration boundary ${EXPECTED_MAIN_PUSH_AUTOMATIC}; reject silent growth or unreviewed migration`,
   );
+  assert.equal(
+    receipt.pull_request_automatic.length,
+    EXPECTED_PULL_REQUEST_AUTOMATIC,
+    `automatic pull-request workflow count must match the measured ${PRE_PR_GUARD_PULL_REQUEST_RUNS} exact-head runs at ${PRE_PR_GUARD_HEAD} ` +
+      `and the explicit boundary ${EXPECTED_PULL_REQUEST_AUTOMATIC}; reject silent PR-only growth or unreviewed migration`,
+  );
   assert.ok(
     receipt.main_push_automatic.includes('.github/workflows/test.yml'),
     'generic Verification suite must remain represented in automatic main coverage',
@@ -92,6 +101,8 @@ test('bounded migration removes thirty-five historical automatic lanes while pre
   console.log('WORKFLOW_TRIGGER_POLICY_RECEIPT ' + JSON.stringify({
     pre_migration_main_sha: PRE_MIGRATION_MAIN_SHA,
     pre_migration_main_push_runs: PRE_MIGRATION_MAIN_PUSH_RUNS,
+    pre_pr_guard_head: PRE_PR_GUARD_HEAD,
+    pre_pr_guard_pull_request_runs: PRE_PR_GUARD_PULL_REQUEST_RUNS,
     migrated_manual_only: MIGRATED_MANUAL_ONLY,
     current_main_push_automatic: receipt.main_push_automatic.length,
     current_pull_request_automatic: receipt.pull_request_automatic.length,
