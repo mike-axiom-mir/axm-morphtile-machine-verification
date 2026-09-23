@@ -1,8 +1,7 @@
 name: current growth round 29 assembly wrapper shape
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
