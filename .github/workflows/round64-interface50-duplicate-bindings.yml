@@ -1,8 +1,6 @@
 name: round 64 Interface50 duplicate binding declarations
 
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
