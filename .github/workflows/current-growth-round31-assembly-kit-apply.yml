@@ -1,8 +1,7 @@
 name: current growth round 31 assembly kit apply
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
