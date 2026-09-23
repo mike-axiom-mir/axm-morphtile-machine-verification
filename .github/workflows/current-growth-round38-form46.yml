@@ -1,10 +1,6 @@
 name: current-growth-round38-form46
 
 on:
-  push:
-    branches:
-      - verification/round38-form46-rotation-state
-  pull_request:
   workflow_dispatch:
 
 jobs:
